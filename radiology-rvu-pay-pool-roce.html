@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radiology RVU pay, pool and return on capital</title>
+<style>:root{
+  --paper:#eef1f4; --panel:#fff; --panel2:#f7f9fb;
+  --ink:#0e151c; --ink2:#3d4c59; --muted:#79878f; --line:#dbe2e8; --line2:#eef2f5;
+  --brand:#123e6b; --brand2:#1f6fb2; --field:#f3f8fc; --fieldb:#d5e3ef;
+  --pos:#0c6b4f; --neg:#a3271f; --warn:#96590a; --warnbg:#fdf4e3;
+  --k1:#c9d6df; --k2:#123e6b; --k3:#3f7cac; --k4:#7fa8c4; --k5:#aac4d6; --k6:#dbe3e9; --ks:#0c6b4f; --kd:#a3271f;
+  --r:4px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0c1116; --panel:#141b22; --panel2:#101820;
+    --ink:#e8eef3; --ink2:#b3c1cc; --muted:#7b8a96; --line:#243039; --line2:#1b242c;
+    --brand:#7fb3e0; --brand2:#9ecbf0; --field:#0d151c; --fieldb:#2b3945;
+    --pos:#4cc79b; --neg:#e2766b; --warn:#e0a94c; --warnbg:#26200f;
+    --k1:#3a4954; --k2:#7fb3e0; --k3:#4b7fa8; --k4:#35586f; --k5:#2a4252; --k6:#20303a; --ks:#2f9b76; --kd:#b4483c;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font:400 14px/1.45 ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.012em}
+button,input,select,textarea{font:inherit;color:inherit}
+.r{text-align:right}
+.strong{font-weight:600}
+.muted{color:var(--muted)}
+.neg,.neg-row td:nth-child(2){color:var(--neg)}
+.pos{color:var(--pos)}
+.warn-t{color:var(--warn)}
+
+/* ---- top ---- */
+.top{background:var(--panel);border-bottom:1px solid var(--line)}
+.top-in{max-width:1560px;margin:0 auto;padding:12px 20px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.mark{font-weight:600;font-size:15px;letter-spacing:-.02em}
+.mark b{color:var(--brand2)}
+#unitName{font-weight:600}
+#unitPeriod{color:var(--muted)}
+.top-act{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+.sticky{position:sticky;top:0;z-index:30;background:var(--panel);border-bottom:1px solid var(--line)}
+.ledger{max-width:1560px;margin:0 auto;padding:10px 20px;display:flex;align-items:stretch;gap:0;overflow-x:auto}
+.lg-item{display:flex;flex-direction:column;gap:1px;padding:2px 22px 2px 0;min-width:126px;flex:1}
+.lg-sep{width:1px;background:var(--line);margin:2px 22px 2px 0}
+.lg-l{font-size:11.5px;color:var(--muted)}
+.lg-v{font-size:21px;font-weight:600;letter-spacing:-.025em;line-height:1.15}
+.lg-s{font-size:11px;color:var(--muted)}
+.lg-key .lg-v{color:var(--brand2)}
+.lg-pool .lg-v{color:var(--pos)}
+.lg-v.neg{color:var(--neg)}
+
+.tabs{max-width:1560px;margin:0 auto;padding:0 20px;display:flex;gap:2px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:9px 12px;cursor:pointer;color:var(--ink2);white-space:nowrap;font-size:13.5px}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--brand2);border-bottom-color:var(--brand2);font-weight:600}
+
+main{max-width:1560px;margin:0 auto;padding:18px 20px 80px}
+
+/* ---- panels ---- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-bottom:16px}
+.p-head{padding:13px 16px;border-bottom:1px solid var(--line2);display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.p-head h2{font-size:15px}
+.p-sub{flex:0 0 100%;margin:0;color:var(--muted);font-size:12.5px;max-width:76ch;order:3}
+.p-act{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.p-body{padding:14px 16px}
+.p-foot{padding:10px 16px;border-top:1px solid var(--line2)}
+.toolbar{padding:9px 16px;border-bottom:1px solid var(--line2);display:flex;gap:10px;align-items:center}
+.search{flex:1;max-width:380px;padding:6px 9px;border:1px solid var(--fieldb);background:var(--field);border-radius:var(--r)}
+.search:focus{outline:2px solid var(--brand2);outline-offset:-1px}
+
+/* ---- kpis ---- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;display:flex;flex-direction:column;gap:3px}
+.kpi-l{font-size:12px;color:var(--muted)}
+.kpi-v{font-size:26px;font-weight:600;letter-spacing:-.03em}
+.kpi-s{font-size:11.5px;color:var(--muted)}
+
+/* ---- flow bar ---- */
+.flow{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:16px}
+.flow-head{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.flow-bar{display:flex;height:34px;border-radius:3px;overflow:hidden;background:var(--line2)}
+.fseg{transition:width .25s ease}
+.fseg.k1{background:var(--k1)}.fseg.k2{background:var(--k2)}.fseg.k3{background:var(--k3)}
+.fseg.k4{background:var(--k4)}.fseg.k5{background:var(--k5)}.fseg.k6{background:var(--k6)}
+.fseg.ks{background:var(--ks)}.fseg.kd{background:var(--kd)}
+.flow-key{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:12px;color:var(--ink2)}
+.fk i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.fk i.k1{background:var(--k1)}.fk i.k2{background:var(--k2)}.fk i.k3{background:var(--k3)}
+.fk i.k4{background:var(--k4)}.fk i.k5{background:var(--k5)}.fk i.k6{background:var(--k6)}
+.fk i.ks{background:var(--ks)}.fk i.kd{background:var(--kd)}
+.fk em{color:var(--muted);font-style:normal}
+
+/* ---- tables ---- */
+.scroll{overflow-x:auto}
+.scroll.tall{max-height:62vh;overflow-y:auto}
+table.grid{width:100%;border-collapse:collapse;font-size:13px}
+.grid th{position:sticky;top:0;background:var(--panel);text-align:left;font-weight:500;color:var(--muted);
+  font-size:11.5px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
+.grid th.r{text-align:right}
+.grid td{padding:4px 10px;border-bottom:1px solid var(--line2);vertical-align:middle}
+.grid td.r{white-space:nowrap}
+.grid tbody tr:hover{background:var(--panel2)}
+.grid tfoot td{padding:8px 10px;border-top:1px solid var(--line);font-weight:600;background:var(--panel2)}
+.grid td.code,.c-in.code{font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.grid .empty,.empty{padding:22px 10px;color:var(--muted);text-align:center}
+.grid.slim td{padding:7px 10px}
+.grid.sum{margin-top:2px}
+.grid tr.over td{background:var(--warnbg)}
+.grid td.over .c-in{border-color:var(--warn)}
+.grid tr.off td{opacity:.5}
+.grid .sub{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
+.matrix td:first-child{width:200px}
+.matrix tr.mult td{background:var(--panel2);color:var(--muted);font-size:12px}
+.matrix td.fixed .c-in{background:var(--panel);border-color:var(--brand2);font-weight:600}
+
+/* p&l */
+.grid.pl td:first-child{width:52%}
+.grid.pl tr.total td{border-top:1px solid var(--ink);font-weight:600;background:var(--panel2)}
+.grid.pl tr.big td{font-size:16px}
+.grid.pl tr.sub-total td{color:var(--muted)}
+.grid.pl tr.hi td:first-child{font-weight:600}
+.ro{padding-right:9px}
+
+/* ---- inputs ---- */
+.c-in{width:84px;padding:5px 7px;text-align:right;background:var(--field);border:1px solid var(--fieldb);border-radius:3px}
+.c-in.txt{text-align:left;width:150px}
+.c-in.wide{width:100%;min-width:150px}
+.c-in.name{width:190px;font-weight:600}
+.c-in.code{width:92px}
+.c-in.tiny-in{width:48px;text-align:center}
+.c-in.chip-in{width:118px;background:none;border:0}
+.c-in:focus{outline:2px solid var(--brand2);outline-offset:-1px;background:var(--panel)}
+.c-in::placeholder{color:var(--muted);opacity:.7}
+.c-sel{padding:5px 6px;background:var(--field);border:1px solid var(--fieldb);border-radius:3px;max-width:190px}
+.suf{color:var(--muted);margin-left:3px;font-size:12px}
+textarea{width:100%;padding:9px;background:var(--field);border:1px solid var(--fieldb);border-radius:var(--r);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)}
+.fld{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2)}
+.ro-fld{font-weight:600;color:var(--ink)}
+.row-inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.pool-set{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+
+/* ---- buttons ---- */
+.btn{background:var(--brand);color:#fff;border:1px solid var(--brand);padding:6px 12px;border-radius:var(--r);cursor:pointer;font-size:13px}
+.btn:hover{filter:brightness(1.12)}
+.btn.sm{padding:4px 10px;font-size:12.5px}
+.btn.ghost{background:none;color:var(--ink2);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--brand2);color:var(--brand2);filter:none}
+.btn.danger{color:var(--neg);border-color:var(--line)}
+.btn.danger:hover{border-color:var(--neg);color:var(--neg)}
+@media (prefers-color-scheme:dark){.btn{color:#08121b}}
+.ico{background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:3px}
+.ico:hover{color:var(--neg);background:var(--panel2)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{background:none;border:0;padding:5px 11px;cursor:pointer;color:var(--ink2);font-size:12.5px}
+.seg button.on{background:var(--brand);color:#fff}
+@media (prefers-color-scheme:dark){.seg button.on{color:#08121b}}
+.seg.tiny button{padding:3px 8px;font-size:11.5px}
+:focus-visible{outline:2px solid var(--brand2);outline-offset:1px}
+
+/* ---- bits ---- */
+.pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;background:var(--line2);color:var(--ink2)}
+.pill.warn{background:var(--warnbg);color:var(--warn)}
+.alert{background:var(--warnbg);border:1px solid var(--warn);color:var(--warn);padding:10px 14px;border-radius:var(--r);margin-bottom:16px;font-size:13px}
+.minibar{display:inline-block;width:52px;height:5px;background:var(--line2);border-radius:3px;overflow:hidden;margin-right:7px;vertical-align:middle}
+.minibar i{display:block;height:100%;background:var(--brand2)}
+.minibar.hot i{background:var(--warn)}
+.hint{padding:0 16px 14px;color:var(--muted);font-size:12.5px;max-width:80ch}
+.chips{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:14px;padding:1px 4px 1px 8px}
+
+/* ---- roce cards ---- */
+.roce-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;padding:14px 16px}
+.roce{border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:var(--r);padding:12px 14px}
+.roce.good{border-left-color:var(--pos)} .roce.mid{border-left-color:var(--brand2)} .roce.bad{border-left-color:var(--neg)}
+.roce-top{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.roce-n{font-weight:600;font-size:13px}
+.roce-v{font-size:28px;font-weight:600;letter-spacing:-.03em;margin:6px 0 8px}
+.roce.good .roce-v{color:var(--pos)} .roce.bad .roce-v{color:var(--neg)}
+.roce-v span{display:block;font-size:11.5px;font-weight:400;color:var(--muted);letter-spacing:0}
+.roce dl{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px}
+.roce dl div{display:flex;justify-content:space-between;gap:6px;border-top:1px solid var(--line2);padding-top:3px}
+.roce dt{color:var(--muted)} .roce dd{margin:0;font-weight:600}
+
+/* ---- doctors ---- */
+.doc{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px}
+.doc.open{border-color:var(--brand2)}
+.doc-head{display:flex;align-items:center;gap:14px;padding:9px 14px;cursor:pointer;flex-wrap:wrap}
+.doc-head:hover{background:var(--panel2)}
+.caret{color:var(--muted);width:12px;font-size:15px}
+.doc-s{font-size:12.5px;color:var(--ink2)}
+.doc-head .doc-s:nth-last-of-type(1){margin-left:0}
+.doc-m{margin-left:auto}
+.doc-body{border-top:1px solid var(--line2);padding:12px 14px}
+.doc-foot{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line2)}
+.add-line{margin:0 0 10px}
+.pastebox{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:12px}
+
+/* ---- modal ---- */
+.overlay{position:fixed;inset:0;background:rgba(9,17,24,.55);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:60}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:6px;max-width:940px;width:100%;max-height:84vh;overflow:auto}
+
+/* ---- toast ---- */
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--ink);color:var(--paper);
+  padding:9px 16px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:80}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+footer{max-width:1560px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:12px}
+footer p{max-width:86ch}
+
+@media (max-width:760px){
+  .lg-item{min-width:112px}
+  .lg-v{font-size:17px}
+  .lg-sep{margin-right:14px}
+  .doc-m{margin-left:0}
+  .c-in.wide{min-width:120px}
+}
+@media print{
+  .sticky,.top-act,.p-act,.toolbar,.ico,.btn,.tabs,footer{display:none!important}
+  body{background:#fff}
+  .panel,.doc{break-inside:avoid;border-color:#ccc}
+  .scroll.tall{max-height:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <span class="mark">Radiology <b>RVU</b> model</span>
+    <span id="unitName"></span>
+    <span id="unitPeriod"></span>
+    <div class="top-act">
+      <button class="btn ghost sm" data-act="save-json">Save a copy</button>
+      <button class="btn ghost sm" data-act="load-json">Open a saved copy</button>
+      <button class="btn ghost sm" data-act="print">Print</button>
+      <button class="btn ghost sm" data-act="reset">Start again</button>
+    </div>
+  </div>
+</header>
+
+<div class="sticky">
+  <div class="ledger" id="ledger"></div>
+  <nav class="tabs" id="tabs"></nav>
+</div>
+
+<main id="view"></main>
+
+<footer>
+  <p>Pay for a study is cases &times; the RVU of that study &times; the rate per RVU for the radiologist&rsquo;s grade. Caps stop a grade from absorbing scarce CT and MRI slots; work beyond a cap still counts as RVU but is paid at the reduced rate set on the pay tab. The pool is the share of departmental surplus handed back after every cost is met, and return on capital employed annualises each machine&rsquo;s EBIT against its written-down value plus working capital.</p>
+  <p>Everything you type stays in this browser. Use <b>Save a copy</b> before sharing the file or switching machines.</p>
+</footer>
+
+<div id="modal"></div>
+<div id="toast" class="toast"></div>
+<input type="file" id="fileIn" accept="application/json,.json" style="display:none">
+
+<script>/* ============================================================
+   Radiology RVU Wage, Pool & ROCE Model
+   Core: state, seed data, persistence, calculation engine
+   ============================================================ */
+'use strict';
+
+var LS_KEY = 'rvu_model_v2';
+var LS_LIB = 'rvu_profiles_v2';
+
+function uid(p) { return (p || 'id') + '_' + Math.random().toString(36).slice(2, 9); }
+function num(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  var n = parseFloat(String(v).replace(/[, \u20b9$]/g, ''));
+  return isFinite(n) ? n : 0;
+}
+function has(v) { return v !== null && v !== undefined && v !== ''; }
+
+var store = {
+  get: function (k) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } },
+  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  del: function (k) { try { localStorage.removeItem(k); } catch (e) { } }
+};
+
+var MOD_ALIAS = {
+  ct: 'CT', 'c.t': 'CT', cect: 'CT', 'computed tomography': 'CT',
+  mri: 'MRI', mr: 'MRI', 'magnetic resonance': 'MRI',
+  xray: 'X-Ray', 'x ray': 'X-Ray', 'x-ray': 'X-Ray', xr: 'X-Ray', dx: 'X-Ray', cr: 'X-Ray', radiography: 'X-Ray',
+  usg: 'USG', us: 'USG', ultrasound: 'USG', sonography: 'USG', doppler: 'USG',
+  mammo: 'Mammo', mammography: 'Mammo', mg: 'Mammo',
+  ir: 'Intervention', intervention: 'Intervention', interventional: 'Intervention', dsa: 'Intervention'
+};
+function normMod(s) {
+  var k = String(s || '').trim().toLowerCase();
+  if (!k) return '';
+  if (MOD_ALIAS[k]) return MOD_ALIAS[k];
+  var keys = Object.keys(MOD_ALIAS);
+  for (var i = 0; i < keys.length; i++) { if (k.indexOf(keys[i]) === 0) return MOD_ALIAS[keys[i]]; }
+  return s.trim().replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+}
+
+/* ---------------- seed ---------------- */
+function seedServices() {
+  var raw = [
+    ['XR-101', 'Chest PA', 'X-Ray', 0.35, 350, 15],
+    ['XR-102', 'Chest PA + lateral', 'X-Ray', 0.50, 500, 20],
+    ['XR-110', 'Abdomen erect', 'X-Ray', 0.35, 400, 15],
+    ['XR-120', 'Extremity, single region', 'X-Ray', 0.30, 350, 12],
+    ['XR-130', 'LS spine AP + lateral', 'X-Ray', 0.45, 600, 20],
+    ['XR-140', 'Skeletal survey', 'X-Ray', 1.20, 2200, 60],
+    ['MG-201', 'Digital mammography, bilateral', 'Mammo', 1.20, 2500, 120],
+    ['MG-205', 'Mammography + tomosynthesis', 'Mammo', 1.80, 4200, 150],
+    ['US-301', 'Abdomen and pelvis', 'USG', 1.00, 1200, 30],
+    ['US-305', 'KUB', 'USG', 0.80, 900, 25],
+    ['US-310', 'Obstetric anomaly scan', 'USG', 1.80, 2500, 40],
+    ['US-320', 'Venous Doppler, limb', 'USG', 1.60, 2200, 40],
+    ['US-325', 'Carotid Doppler', 'USG', 1.60, 2400, 40],
+    ['US-330', 'Thyroid and small parts', 'USG', 0.80, 1000, 25],
+    ['US-350', 'Guided biopsy / FNAC', 'USG', 2.50, 4000, 350],
+    ['CT-401', 'Head, plain', 'CT', 1.20, 2500, 60],
+    ['CT-405', 'Chest, plain', 'CT', 1.40, 3500, 80],
+    ['CT-408', 'HRCT chest', 'CT', 1.60, 4000, 80],
+    ['CT-412', 'Abdomen and pelvis, contrast', 'CT', 2.20, 6500, 900],
+    ['CT-415', 'Triphasic liver', 'CT', 3.00, 8500, 1200],
+    ['CT-420', 'KUB, stone protocol', 'CT', 1.20, 3000, 70],
+    ['CT-430', 'CT angiography', 'CT', 3.50, 9500, 1400],
+    ['CT-440', 'PNS / temporal bone', 'CT', 1.30, 3200, 70],
+    ['CT-450', 'CT guided biopsy', 'CT', 3.20, 7500, 900],
+    ['MR-501', 'Brain, plain', 'MRI', 2.60, 6500, 120],
+    ['MR-503', 'Brain, plain + contrast', 'MRI', 3.40, 9500, 1500],
+    ['MR-510', 'LS spine', 'MRI', 2.40, 6500, 120],
+    ['MR-512', 'Whole spine screening', 'MRI', 4.50, 12000, 150],
+    ['MR-520', 'Knee or single joint', 'MRI', 2.40, 6500, 120],
+    ['MR-530', 'MRCP', 'MRI', 3.00, 8500, 150],
+    ['MR-535', 'Abdomen, contrast', 'MRI', 3.60, 11000, 1600],
+    ['MR-540', 'MR angiography', 'MRI', 3.20, 9000, 200],
+    ['MR-550', 'Multiparametric prostate', 'MRI', 4.00, 12000, 1600],
+    ['MR-560', 'Cardiac MRI', 'MRI', 6.00, 18000, 1800]
+  ];
+  return raw.map(function (r) {
+    return { id: uid('s'), code: r[0], name: r[1], modality: r[2], rvu: r[3], tariff: r[4], cogs: r[5] };
+  });
+}
+
+function seed() {
+  var svc = seedServices();
+  function sid(code) { var f = svc.filter(function (s) { return s.code === code; })[0]; return f ? f.id : null; }
+  function lines(pairs) { var o = {}; pairs.forEach(function (p) { var i = sid(p[0]); if (i) o[i] = p[1]; }); return o; }
+
+  var des = [
+    { id: 'd_sr', name: 'Senior Registrar', base: 160, guarantee: 130000, excessPct: 0, poolWeight: 0.5, caps: {}, rateOverride: {} },
+    { id: 'd_ac', name: 'Associate Consultant', base: 250, guarantee: 175000, excessPct: 0, poolWeight: 0.8, caps: {}, rateOverride: {} },
+    { id: 'd_co', name: 'Consultant', base: 340, guarantee: 0, excessPct: 25, poolWeight: 1, caps: {}, rateOverride: {} },
+    { id: 'd_sc', name: 'Senior Consultant', base: 430, guarantee: 0, excessPct: 40, poolWeight: 1.25, caps: { CT: 220, MRI: 170 }, rateOverride: {} }
+  ];
+
+  return {
+    settings: {
+      unit: 'Radiology — Main Hospital',
+      period: 'Sep 2026',
+      currency: '\u20b9',
+      locale: 'en-IN',
+      capBasis: 'cases'
+    },
+    modalities: [
+      { name: 'X-Ray', mult: 1 }, { name: 'USG', mult: 1 }, { name: 'CT', mult: 1 },
+      { name: 'MRI', mult: 1 }, { name: 'Mammo', mult: 1 }, { name: 'Intervention', mult: 1.15 }
+    ],
+    designations: des,
+    services: svc,
+    doctors: [
+      {
+        id: uid('dr'), name: 'Dr. Anita Sharma', designationId: 'd_sc', fixed: 0, mode: 'detailed', inPool: true, quick: {},
+        lines: lines([['MR-501', 90], ['MR-503', 45], ['MR-510', 70], ['MR-512', 22], ['MR-530', 26], ['MR-550', 14], ['MR-560', 6],
+        ['CT-412', 70], ['CT-430', 30], ['CT-415', 22], ['CT-401', 110], ['CT-450', 8]])
+      },
+      {
+        id: uid('dr'), name: 'Dr. Rahul Menon', designationId: 'd_co', fixed: 0, mode: 'detailed', inPool: true, quick: {},
+        lines: lines([['CT-401', 130], ['CT-405', 55], ['CT-408', 34], ['CT-420', 42], ['CT-440', 28], ['CT-412', 46],
+        ['US-301', 70], ['US-320', 22], ['MR-510', 40], ['MR-520', 30]])
+      },
+      {
+        id: uid('dr'), name: 'Dr. Kavita Iyer', designationId: 'd_ac', fixed: 0, mode: 'detailed', inPool: true, quick: {},
+        lines: lines([['US-301', 210], ['US-305', 90], ['US-310', 64], ['US-330', 75], ['US-325', 30], ['US-350', 18],
+        ['MG-201', 55], ['MG-205', 16], ['XR-101', 120]])
+      },
+      {
+        id: uid('dr'), name: 'Dr. Suman Bose', designationId: 'd_sr', fixed: 0, mode: 'quick', inPool: true, lines: {},
+        quick: { 'X-Ray': { cases: 980 }, 'USG': { cases: 120 }, 'CT': { cases: 60 } }
+      }
+    ],
+    equipment: [
+      { id: uid('eq'), name: 'MRI 1.5T (Siemens)', modality: 'MRI', weight: 1, capex: 55000000, accumDep: 11000000, life: 10, salvagePct: 5, cmcAnnual: 3500000, wcPct: 8, capacity: 550 },
+      { id: uid('eq'), name: 'CT 128 slice', modality: 'CT', weight: 1, capex: 32000000, accumDep: 9600000, life: 8, salvagePct: 5, cmcAnnual: 2200000, wcPct: 8, capacity: 1100 },
+      { id: uid('eq'), name: 'Digital radiography room 1', modality: 'X-Ray', weight: 1, capex: 6500000, accumDep: 2600000, life: 10, salvagePct: 5, cmcAnnual: 350000, wcPct: 5, capacity: 2400 },
+      { id: uid('eq'), name: 'Ultrasound suite (2 units)', modality: 'USG', weight: 1, capex: 8000000, accumDep: 3400000, life: 7, salvagePct: 5, cmcAnnual: 440000, wcPct: 5, capacity: 1500 },
+      { id: uid('eq'), name: 'Mammography + tomo', modality: 'Mammo', weight: 1, capex: 8000000, accumDep: 1600000, life: 10, salvagePct: 5, cmcAnnual: 500000, wcPct: 5, capacity: 250 }
+    ],
+    pl: {
+      revenueMode: 'auto', grossOverride: 0, otherRevenue: 0, deductionPct: 8,
+      cogsExtra: 120000, staffCost: 1150000, otherCosts: 850000, cmcExtra: 0,
+      poolPct: 30, poolBasis: 'rvu'
+    }
+  };
+}
+
+var state = null;
+var ui = { tab: 'dash', openDoctor: null, search: '', importRows: null, importMap: [], importMode: 'merge', msg: '' };
+
+function loadState() {
+  var s = store.get(LS_KEY);
+  if (s && s.services && s.designations) { state = migrate(s); }
+  else { state = seed(); }
+}
+function migrate(s) {
+  s.settings = Object.assign({ currency: '\u20b9', locale: 'en-IN', capBasis: 'cases', unit: '', period: '' }, s.settings || {});
+  s.pl = Object.assign({ revenueMode: 'auto', deductionPct: 0, poolPct: 30, poolBasis: 'rvu' }, s.pl || {});
+  (s.doctors || []).forEach(function (d) { d.lines = d.lines || {}; d.quick = d.quick || {}; if (!d.mode) d.mode = 'detailed'; if (d.inPool === undefined) d.inPool = true; });
+  (s.designations || []).forEach(function (x) { x.caps = x.caps || {}; x.rateOverride = x.rateOverride || {}; });
+  return s;
+}
+function saveState() { store.set(LS_KEY, state); }
+
+/* ---------------- calculation ---------------- */
+function modNames() { return state.modalities.map(function (m) { return m.name; }); }
+function modMult(name) { var m = state.modalities.filter(function (x) { return x.name === name; })[0]; return m ? num(m.mult) || 1 : 1; }
+function desById(id) { return state.designations.filter(function (d) { return d.id === id; })[0] || state.designations[0]; }
+function svcById(id) { return state.services.filter(function (s) { return s.id === id; })[0]; }
+
+function effRate(des, mod) {
+  var ov = num((des.rateOverride || {})[mod]);
+  if (ov > 0) return ov;
+  return num(des.base) * modMult(mod);
+}
+function svcAvg(mod) {
+  var list = state.services.filter(function (s) { return s.modality === mod; });
+  if (!list.length) return { rvu: 1, tariff: 0, cogs: 0 };
+  var a = { rvu: 0, tariff: 0, cogs: 0 };
+  list.forEach(function (s) { a.rvu += num(s.rvu); a.tariff += num(s.tariff); a.cogs += num(s.cogs); });
+  a.rvu /= list.length; a.tariff /= list.length; a.cogs /= list.length;
+  return a;
+}
+function depMonthly(e) { var life = num(e.life) || 10; return (num(e.capex) * (1 - num(e.salvagePct) / 100)) / life / 12; }
+
+function blank() { return { cases: 0, rvu: 0, revenue: 0, cogs: 0, wages: 0 }; }
+
+function compute() {
+  var S = state;
+  var mods = modNames();
+  var deptMod = {};
+  mods.forEach(function (m) { deptMod[m] = blank(); });
+  function bucket(m) { if (!deptMod[m]) deptMod[m] = blank(); return deptMod[m]; }
+
+  var docs = S.doctors.map(function (d) {
+    var des = desById(d.designationId);
+    var byMod = {};
+    var lines = [];
+    function add(m, c, rvu, rev, cg) {
+      if (!byMod[m]) byMod[m] = blank();
+      byMod[m].cases += c; byMod[m].rvu += rvu; byMod[m].revenue += rev; byMod[m].cogs += cg;
+    }
+    if (d.mode === 'quick') {
+      mods.forEach(function (m) {
+        var q = (d.quick || {})[m] || {};
+        var c = num(q.cases);
+        if (c <= 0) return;
+        var a = svcAvg(m);
+        var r = has(q.avgRvu) ? num(q.avgRvu) : a.rvu;
+        var p = has(q.avgPrice) ? num(q.avgPrice) : a.tariff;
+        add(m, c, c * r, c * p, c * a.cogs);
+        lines.push({ code: '—', name: m + ', blended average', modality: m, cases: c, rvu: r, total: c * r });
+      });
+    } else {
+      Object.keys(d.lines || {}).forEach(function (k) {
+        var s = svcById(k); var c = num(d.lines[k]);
+        if (!s || c <= 0) return;
+        add(s.modality, c, c * num(s.rvu), c * num(s.tariff), c * num(s.cogs));
+        lines.push({ id: k, code: s.code, name: s.name, modality: s.modality, cases: c, rvu: num(s.rvu), total: c * num(s.rvu) });
+      });
+    }
+    var modRows = [], variable = 0, grossRvu = 0, payRvu = 0, flags = [];
+    Object.keys(byMod).forEach(function (m) {
+      var b = byMod[m];
+      if (b.cases <= 0 && b.rvu <= 0) return;
+      var rate = effRate(des, m);
+      var cap = num((des.caps || {})[m]);
+      var basisVal = S.settings.capBasis === 'cases' ? b.cases : b.rvu;
+      var f = 1, over = 0;
+      if (cap > 0 && basisVal > cap) { f = cap / basisVal; over = basisVal - cap; flags.push({ mod: m, cap: cap, actual: basisVal, over: over }); }
+      var exPct = num(des.excessPct) / 100;
+      var pr = b.rvu * f + b.rvu * (1 - f) * exPct;
+      var pay = pr * rate;
+      variable += pay; grossRvu += b.rvu; payRvu += pr;
+      modRows.push({ mod: m, cases: b.cases, rvu: b.rvu, revenue: b.revenue, cogs: b.cogs, rate: rate, cap: cap, over: over, capped: f < 1, payRvu: pr, pay: pay });
+      var bk = bucket(m);
+      bk.cases += b.cases; bk.rvu += b.rvu; bk.revenue += b.revenue; bk.cogs += b.cogs; bk.wages += pay;
+    });
+    modRows.sort(function (a, b) { return b.pay - a.pay; });
+    lines.sort(function (a, b) { return b.total - a.total; });
+    var fixed = num(d.fixed);
+    var pre = variable + fixed;
+    var topUp = Math.max(0, num(des.guarantee) - pre);
+    return {
+      id: d.id, name: d.name, des: des, mode: d.mode, inPool: d.inPool !== false,
+      modRows: modRows, lines: lines, cases: modRows.reduce(function (t, r) { return t + r.cases; }, 0),
+      grossRvu: grossRvu, payRvu: payRvu, variable: variable, fixed: fixed, topUp: topUp,
+      wage: pre + topUp, revenue: modRows.reduce(function (t, r) { return t + r.revenue; }, 0), flags: flags
+    };
+  });
+
+  var totals = {
+    cases: docs.reduce(function (t, d) { return t + d.cases; }, 0),
+    rvu: docs.reduce(function (t, d) { return t + d.grossRvu; }, 0),
+    payRvu: docs.reduce(function (t, d) { return t + d.payRvu; }, 0),
+    revenue: docs.reduce(function (t, d) { return t + d.revenue; }, 0),
+    wages: docs.reduce(function (t, d) { return t + d.wage; }, 0),
+    cogs: 0
+  };
+  mods.forEach(function (m) { totals.cogs += deptMod[m] ? deptMod[m].cogs : 0; });
+  Object.keys(deptMod).forEach(function (m) { if (mods.indexOf(m) === -1) totals.cogs += deptMod[m].cogs; });
+
+  // scale modality wage buckets so they reconcile with total wages (guarantees, fixed pay)
+  var bucketWages = 0;
+  Object.keys(deptMod).forEach(function (m) { bucketWages += deptMod[m].wages; });
+  var wScale = bucketWages > 0 ? totals.wages / bucketWages : 0;
+  Object.keys(deptMod).forEach(function (m) { deptMod[m].wagesAll = deptMod[m].wages * wScale; });
+
+  /* P&L */
+  var P = S.pl;
+  var grossAuto = totals.revenue;
+  var gross = (P.revenueMode === 'manual' ? num(P.grossOverride) : grossAuto) + num(P.otherRevenue);
+  var deductions = gross * num(P.deductionPct) / 100;
+  var net = gross - deductions;
+  var cogs = totals.cogs + num(P.cogsExtra);
+  var cmc = S.equipment.reduce(function (t, e) { return t + num(e.cmcAnnual) / 12; }, 0) + num(P.cmcExtra);
+  var dep = S.equipment.reduce(function (t, e) { return t + depMonthly(e); }, 0);
+  var indirect = num(P.staffCost) + num(P.otherCosts);
+  var surplus = net - cogs - totals.wages - cmc - dep - indirect;
+  var pl = {
+    gross: gross, grossAuto: grossAuto, deductions: deductions, net: net, cogs: cogs,
+    wages: totals.wages, cmc: cmc, dep: dep, indirect: indirect, staff: num(P.staffCost),
+    other: num(P.otherCosts), surplus: surplus,
+    margin: net > 0 ? surplus / net * 100 : 0,
+    ebitda: surplus + dep
+  };
+
+  /* equipment / ROCE */
+  var wt = {};
+  S.equipment.forEach(function (e) { wt[e.modality] = (wt[e.modality] || 0) + (num(e.weight) || 0); });
+  var netFactor = gross > 0 ? net / gross : 1;
+  var equip = S.equipment.map(function (e) {
+    var tw = wt[e.modality] || 0;
+    var share = tw > 0 ? num(e.weight) / tw : 0;
+    var dm = deptMod[e.modality] || blank();
+    var revenue = dm.revenue * share * netFactor;
+    var cases = dm.cases * share;
+    var ecogs = dm.cogs * share;
+    var ewages = (dm.wagesAll || 0) * share;
+    var ecmc = num(e.cmcAnnual) / 12;
+    var edep = depMonthly(e);
+    var revShare = pl.net > 0 ? revenue / pl.net : 0;
+    var eind = indirect * revShare;
+    var contribution = revenue - ecogs - ewages;
+    var ebitda = contribution - ecmc - eind;
+    var ebit = ebitda - edep;
+    var floor = num(e.capex) * num(e.salvagePct) / 100;
+    var nbv = Math.max(num(e.capex) - num(e.accumDep), floor);
+    var wc = revenue * 12 * num(e.wcPct) / 100;
+    var ce = nbv + wc;
+    var fixedCost = ecmc + edep + eind;
+    var cpc = cases > 0 ? contribution / cases : 0;
+    return {
+      id: e.id, name: e.name, modality: e.modality, share: share, cases: cases,
+      capacity: num(e.capacity), util: num(e.capacity) > 0 ? cases / num(e.capacity) * 100 : 0,
+      revenue: revenue, cogs: ecogs, wages: ewages, cmc: ecmc, dep: edep, indirect: eind,
+      contribution: contribution, ebitda: ebitda, ebit: ebit,
+      nbv: nbv, wc: wc, ce: ce,
+      roce: ce > 0 ? ebit * 12 / ce * 100 : 0,
+      margin: revenue > 0 ? ebit / revenue * 100 : 0,
+      revPerCase: cases > 0 ? revenue / cases : 0,
+      payback: ebitda > 0 ? num(e.capex) / (ebitda * 12) : null,
+      beCases: cpc > 0 ? fixedCost / cpc : null
+    };
+  });
+
+  /* pool */
+  var poolAmt = Math.max(0, surplus) * num(P.poolPct) / 100;
+  var parts = docs.filter(function (d) { return d.inPool; });
+  var basisOf = function (d) {
+    var b = P.poolBasis === 'wage' ? d.wage : (P.poolBasis === 'equal' ? 1 : d.payRvu);
+    return b * (num(d.des.poolWeight) || 0);
+  };
+  var totalBasis = parts.reduce(function (t, d) { return t + basisOf(d); }, 0);
+  var pool = {
+    amount: poolAmt, retained: Math.max(0, surplus) - poolAmt,
+    rows: docs.map(function (d) {
+      var b = d.inPool ? basisOf(d) : 0;
+      var shr = totalBasis > 0 ? b / totalBasis : 0;
+      return { id: d.id, name: d.name, des: d.des.name, inPool: d.inPool, basis: b, share: shr, amount: poolAmt * shr };
+    })
+  };
+  docs.forEach(function (d) {
+    var r = pool.rows.filter(function (x) { return x.id === d.id; })[0];
+    d.pool = r ? r.amount : 0;
+    d.totalComp = d.wage + d.pool;
+    d.perRvu = d.grossRvu > 0 ? d.totalComp / d.grossRvu : 0;
+    d.costPct = d.revenue > 0 ? d.totalComp / d.revenue * 100 : 0;
+  });
+
+  return { docs: docs, totals: totals, deptMod: deptMod, pl: pl, equip: equip, pool: pool, mods: mods };
+}
+/* ============================================================
+   UI layer: formatting, rendering, tabs
+   ============================================================ */
+
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function fmt(n, d) {
+  d = d || 0;
+  if (!isFinite(n)) n = 0;
+  try { return n.toLocaleString(state.settings.locale || 'en-IN', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  catch (e) { return n.toFixed(d); }
+}
+function money(n, d) {
+  if (!isFinite(n)) n = 0;
+  var s = (state.settings.currency || '') + fmt(Math.abs(n), d || 0);
+  return n < 0 ? '(' + s + ')' : s;
+}
+function short(n) {
+  if (!isFinite(n)) n = 0;
+  var a = Math.abs(n), c = state.settings.currency || '', sgn = n < 0 ? '-' : '';
+  if ((state.settings.locale || 'en-IN') === 'en-IN') {
+    if (a >= 1e7) return sgn + c + (a / 1e7).toFixed(2) + ' Cr';
+    if (a >= 1e5) return sgn + c + (a / 1e5).toFixed(2) + ' L';
+  } else {
+    if (a >= 1e6) return sgn + c + (a / 1e6).toFixed(2) + 'M';
+    if (a >= 1e3) return sgn + c + (a / 1e3).toFixed(1) + 'K';
+  }
+  return sgn + c + fmt(a, 0);
+}
+function pct(n, d) { if (!isFinite(n)) n = 0; return fmt(n, d === undefined ? 1 : d) + '%'; }
+function rawv(v) { return v === null || v === undefined ? '' : String(v); }
+
+/* field bound to a collection item: state[obj][id].field */
+function cell(obj, id, field, opts) {
+  opts = opts || {};
+  var k = obj + '|' + id + '|' + field;
+  return '<input class="c-in ' + (opts.cls || 'num') + '" type="text" inputmode="' + (opts.text ? 'text' : 'decimal') +
+    '" data-obj="' + obj + '" data-id="' + id + '" data-f="' + field + '" data-key="' + k + '"' +
+    (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') +
+    ' value="' + esc(opts.val) + '">';
+}
+function bind(path, val, opts) {
+  opts = opts || {};
+  return '<input class="c-in ' + (opts.cls || 'num') + '" type="text" inputmode="' + (opts.text ? 'text' : 'decimal') +
+    '" data-bind="' + path + '" data-key="b|' + path + '"' +
+    (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') +
+    ' value="' + esc(rawv(val)) + '">';
+}
+function sel(attrs, options, current) {
+  return '<select class="c-sel" ' + attrs + '>' + options.map(function (o) {
+    var v = typeof o === 'string' ? o : o[0], l = typeof o === 'string' ? o : o[1];
+    return '<option value="' + esc(v) + '"' + (String(v) === String(current) ? ' selected' : '') + '>' + esc(l) + '</option>';
+  }).join('') + '</select>';
+}
+function modSelect(obj, id, current) {
+  return sel('data-obj="' + obj + '" data-id="' + id + '" data-f="modality"', modNames(), current);
+}
+
+var COST_KEYS = [
+  { k: 'cogs', label: 'Consumables', c: 'k1' },
+  { k: 'wages', label: 'Radiologist pay', c: 'k2' },
+  { k: 'staff', label: 'Technical staff', c: 'k3' },
+  { k: 'cmc', label: 'Maintenance', c: 'k4' },
+  { k: 'dep', label: 'Depreciation', c: 'k5' },
+  { k: 'other', label: 'Other dept costs', c: 'k6' }
+];
+
+/* ---------------- ledger strip ---------------- */
+function ledgerHTML(C) {
+  var items = [
+    ['Cases read', fmt(C.totals.cases), ''],
+    ['RVU earned', fmt(C.totals.rvu, 1), C.totals.payRvu < C.totals.rvu ? fmt(C.totals.payRvu, 1) + ' payable after caps' : 'no caps applied'],
+    ['Radiologist pay', short(C.totals.wages), money(C.totals.rvu > 0 ? C.totals.wages / C.totals.rvu : 0) + ' per RVU'],
+    ['Net revenue', short(C.pl.net), ''],
+    ['Departmental surplus', short(C.pl.surplus), pct(C.pl.margin) + ' of net revenue'],
+    ['Pool to distribute', short(C.pool.amount), pct(num(state.pl.poolPct)) + ' of surplus']
+  ];
+  return items.map(function (it, i) {
+    return '<div class="lg-item' + (i === 4 ? ' lg-key' : '') + (i === 5 ? ' lg-pool' : '') + '">' +
+      '<span class="lg-l">' + it[0] + '</span>' +
+      '<span class="lg-v' + (it[1].indexOf('(') === 0 || it[1].indexOf('-') === 0 ? ' neg' : '') + '">' + it[1] + '</span>' +
+      (it[2] ? '<span class="lg-s">' + it[2] + '</span>' : '') + '</div>';
+  }).join('<span class="lg-sep"></span>');
+}
+
+/* ---------------- overview ---------------- */
+function flowBar(C) {
+  var pl = C.pl;
+  var parts = [
+    { label: 'Consumables', v: pl.cogs, c: 'k1' },
+    { label: 'Radiologist pay', v: pl.wages, c: 'k2' },
+    { label: 'Technical staff', v: pl.staff, c: 'k3' },
+    { label: 'Maintenance', v: pl.cmc, c: 'k4' },
+    { label: 'Depreciation', v: pl.dep, c: 'k5' },
+    { label: 'Other dept costs', v: pl.other, c: 'k6' },
+    { label: pl.surplus >= 0 ? 'Surplus' : 'Deficit', v: Math.abs(pl.surplus), c: pl.surplus >= 0 ? 'ks' : 'kd' }
+  ];
+  var tot = parts.reduce(function (t, p) { return t + Math.max(0, p.v); }, 0) || 1;
+  return '<div class="flow">' +
+    '<div class="flow-head"><span>Where the ' + short(pl.net) + ' of net revenue goes</span></div>' +
+    '<div class="flow-bar">' + parts.map(function (p) {
+      var w = Math.max(0, p.v) / tot * 100;
+      return '<div class="fseg ' + p.c + '" style="width:' + w.toFixed(3) + '%" title="' + esc(p.label) + ' ' + money(p.v) + '"></div>';
+    }).join('') + '</div>' +
+    '<div class="flow-key">' + parts.map(function (p) {
+      return '<span class="fk"><i class="' + p.c + '"></i>' + p.label + ' <b>' + short(p.v) + '</b> <em>' + pct(p.v / tot * 100, 0) + '</em></span>';
+    }).join('') + '</div></div>';
+}
+
+function renderDash(C) {
+  var t = C.totals, pl = C.pl;
+  var kpis = [
+    ['Work done', fmt(t.rvu, 1) + ' RVU', fmt(t.cases) + ' cases across ' + C.mods.filter(function (m) { return C.deptMod[m] && C.deptMod[m].cases > 0; }).length + ' modalities'],
+    ['Radiologist cost', short(t.wages + C.pool.amount), pct(pl.net > 0 ? (t.wages + C.pool.amount) / pl.net * 100 : 0) + ' of net revenue, pool included'],
+    ['Earned per RVU', money(t.rvu > 0 ? (t.wages + C.pool.amount) / t.rvu : 0), 'blended across all designations'],
+    ['Surplus after everything', short(pl.surplus), pct(pl.margin) + ' margin, ' + short(pl.ebitda) + ' before depreciation']
+  ];
+  var capped = C.docs.filter(function (d) { return d.flags.length; });
+
+  var h = '<div class="kpis">' + kpis.map(function (k) {
+    return '<div class="kpi"><span class="kpi-l">' + k[0] + '</span><span class="kpi-v">' + k[1] + '</span><span class="kpi-s">' + k[2] + '</span></div>';
+  }).join('') + '</div>' + flowBar(C);
+
+  if (capped.length) {
+    h += '<div class="alert"><b>Caps applied this period.</b> ' + capped.map(function (d) {
+      return esc(d.name) + ' — ' + d.flags.map(function (f) {
+        return f.mod + ' ' + fmt(f.actual, state.settings.capBasis === 'cases' ? 0 : 1) + ' vs cap ' + fmt(f.cap) +
+          ' (' + fmt(f.over, 0) + ' over, paid at ' + pct(num(d.des.excessPct), 0) + ')';
+      }).join('; ');
+    }).join(' · ') + '</div>';
+  }
+
+  h += '<section class="panel"><div class="p-head"><h2>Radiologist payout</h2>' +
+    '<div class="p-act"><button class="btn sm" data-act="csv-payout">Download as CSV</button></div></div>' +
+    '<div class="scroll"><table class="grid"><thead><tr>' +
+    '<th>Radiologist</th><th>Designation</th><th class="r">Cases</th><th class="r">RVU</th><th class="r">Payable RVU</th>' +
+    '<th class="r">RVU pay</th><th class="r">Fixed</th><th class="r">Top-up to guarantee</th><th class="r">Pool share</th>' +
+    '<th class="r">Total pay</th><th class="r">Per RVU</th><th class="r">Own revenue</th><th class="r">Pay as % of it</th>' +
+    '</tr></thead><tbody>' +
+    C.docs.map(function (d) {
+      return '<tr><td class="strong">' + esc(d.name) + (d.flags.length ? ' <span class="pill warn">capped</span>' : '') + '</td>' +
+        '<td class="muted">' + esc(d.des.name) + '</td>' +
+        '<td class="r">' + fmt(d.cases) + '</td><td class="r">' + fmt(d.grossRvu, 1) + '</td>' +
+        '<td class="r' + (d.payRvu < d.grossRvu ? ' warn-t' : '') + '">' + fmt(d.payRvu, 1) + '</td>' +
+        '<td class="r">' + money(d.variable) + '</td><td class="r">' + money(d.fixed) + '</td>' +
+        '<td class="r' + (d.topUp > 0 ? ' warn-t' : ' muted') + '">' + money(d.topUp) + '</td>' +
+        '<td class="r">' + money(d.pool) + '</td>' +
+        '<td class="r strong">' + money(d.totalComp) + '</td>' +
+        '<td class="r">' + money(d.perRvu) + '</td>' +
+        '<td class="r muted">' + short(d.revenue) + '</td>' +
+        '<td class="r">' + pct(d.revenue > 0 ? d.totalComp / d.revenue * 100 : 0) + '</td></tr>';
+    }).join('') +
+    '</tbody><tfoot><tr><td colspan="2">All radiologists</td><td class="r">' + fmt(t.cases) + '</td><td class="r">' + fmt(t.rvu, 1) + '</td>' +
+    '<td class="r">' + fmt(t.payRvu, 1) + '</td><td class="r">' + money(C.docs.reduce(function (a, d) { return a + d.variable; }, 0)) + '</td>' +
+    '<td class="r">' + money(C.docs.reduce(function (a, d) { return a + d.fixed; }, 0)) + '</td>' +
+    '<td class="r">' + money(C.docs.reduce(function (a, d) { return a + d.topUp; }, 0)) + '</td>' +
+    '<td class="r">' + money(C.pool.amount) + '</td><td class="r strong">' + money(t.wages + C.pool.amount) + '</td>' +
+    '<td class="r">' + money(t.rvu > 0 ? (t.wages + C.pool.amount) / t.rvu : 0) + '</td>' +
+    '<td class="r">' + short(t.revenue) + '</td><td class="r">' + pct(t.revenue > 0 ? (t.wages + C.pool.amount) / t.revenue * 100 : 0) + '</td></tr></tfoot></table></div></section>';
+
+  var modRows = C.mods.concat(Object.keys(C.deptMod).filter(function (m) { return C.mods.indexOf(m) === -1; }))
+    .filter(function (m) { return C.deptMod[m] && (C.deptMod[m].cases > 0 || C.deptMod[m].rvu > 0); });
+  h += '<section class="panel"><div class="p-head"><h2>By modality</h2></div><div class="scroll"><table class="grid"><thead><tr>' +
+    '<th>Modality</th><th class="r">Cases</th><th class="r">RVU</th><th class="r">Share of RVU</th><th class="r">Gross revenue</th>' +
+    '<th class="r">Revenue per RVU</th><th class="r">Radiologist pay</th><th class="r">Pay as % of revenue</th></tr></thead><tbody>' +
+    modRows.map(function (m) {
+      var b = C.deptMod[m];
+      return '<tr><td class="strong">' + esc(m) + '</td><td class="r">' + fmt(b.cases) + '</td><td class="r">' + fmt(b.rvu, 1) + '</td>' +
+        '<td class="r"><span class="minibar"><i style="width:' + (t.rvu > 0 ? b.rvu / t.rvu * 100 : 0).toFixed(1) + '%"></i></span>' + pct(t.rvu > 0 ? b.rvu / t.rvu * 100 : 0, 0) + '</td>' +
+        '<td class="r">' + short(b.revenue) + '</td><td class="r">' + money(b.rvu > 0 ? b.revenue / b.rvu : 0) + '</td>' +
+        '<td class="r">' + short(b.wagesAll || 0) + '</td><td class="r">' + pct(b.revenue > 0 ? (b.wagesAll || 0) / b.revenue * 100 : 0) + '</td></tr>';
+    }).join('') + '</tbody></table></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Return on capital, by machine</h2>' +
+    '<div class="p-act"><button class="btn sm ghost" data-act="tab" data-tab="equip">Open equipment inputs</button></div></div>' +
+    '<div class="roce-cards">' + C.equip.map(function (e) {
+      var tone = e.roce >= 20 ? 'good' : (e.roce >= 0 ? 'mid' : 'bad');
+      return '<div class="roce ' + tone + '"><div class="roce-top"><span class="roce-n">' + esc(e.name) + '</span><span class="pill">' + esc(e.modality) + '</span></div>' +
+        '<div class="roce-v">' + pct(e.roce) + '<span>return on capital employed</span></div>' +
+        '<dl><div><dt>Revenue</dt><dd>' + short(e.revenue) + '</dd></div>' +
+        '<div><dt>EBIT</dt><dd>' + short(e.ebit) + '</dd></div>' +
+        '<div><dt>Capital employed</dt><dd>' + short(e.ce) + '</dd></div>' +
+        '<div><dt>Utilisation</dt><dd>' + (e.capacity > 0 ? pct(e.util, 0) : '—') + '</dd></div></dl></div>';
+    }).join('') + '</div></section>';
+  return h;
+}
+
+/* ---------------- pay rates & caps ---------------- */
+function renderRates(C) {
+  var mods = modNames();
+  var h = '<section class="panel"><div class="p-head"><h2>Designations</h2><p class="p-sub">Pay per RVU is the money value of one RVU for that grade. A case pays cases &times; RVU of the study &times; this rate.</p></div>' +
+    '<div class="scroll"><table class="grid"><thead><tr><th>Designation</th><th class="r">Pay per RVU</th><th class="r">Monthly guarantee</th>' +
+    '<th class="r">Pay on cases above cap</th><th class="r">Pool weight</th><th class="r">Radiologists</th><th></th></tr></thead><tbody>' +
+    state.designations.map(function (d) {
+      var n = state.doctors.filter(function (x) { return x.designationId === d.id; }).length;
+      return '<tr><td>' + cell('designations', d.id, 'name', { val: d.name, text: true, cls: 'txt wide' }) + '</td>' +
+        '<td class="r">' + cell('designations', d.id, 'base', { val: d.base }) + '</td>' +
+        '<td class="r">' + cell('designations', d.id, 'guarantee', { val: d.guarantee, ph: '0' }) + '</td>' +
+        '<td class="r">' + cell('designations', d.id, 'excessPct', { val: d.excessPct, ph: '0' }) + '<span class="suf">%</span></td>' +
+        '<td class="r">' + cell('designations', d.id, 'poolWeight', { val: d.poolWeight }) + '</td>' +
+        '<td class="r muted">' + n + '</td>' +
+        '<td class="r">' + (state.designations.length > 1 ? '<button class="ico" data-act="del" data-obj="designations" data-id="' + d.id + '" title="Remove designation">&times;</button>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>' +
+    '<div class="p-foot"><button class="btn sm" data-act="add-des">Add designation</button></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Monthly caps</h2>' +
+    '<p class="p-sub">A cap stops a grade from soaking up high-value scanner slots. Work beyond the cap still counts as RVU but is paid at the rate in the column above. Leave blank for no cap.</p>' +
+    '<div class="p-act"><span class="seg">' +
+    '<button class="' + (state.settings.capBasis === 'cases' ? 'on' : '') + '" data-act="capbasis" data-v="cases">Cap by cases</button>' +
+    '<button class="' + (state.settings.capBasis === 'rvu' ? 'on' : '') + '" data-act="capbasis" data-v="rvu">Cap by RVU</button></span></div></div>' +
+    '<div class="scroll"><table class="grid matrix"><thead><tr><th>Designation</th>' + mods.map(function (m) { return '<th class="r">' + esc(m) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    state.designations.map(function (d) {
+      return '<tr><td class="strong">' + esc(d.name) + '</td>' + mods.map(function (m) {
+        var used = C.docs.filter(function (x) { return x.des.id === d.id; }).reduce(function (t, x) {
+          var r = x.modRows.filter(function (r) { return r.mod === m; })[0];
+          return t + (r ? (state.settings.capBasis === 'cases' ? r.cases : r.rvu) : 0);
+        }, 0);
+        var cap = num((d.caps || {})[m]);
+        var over = cap > 0 && used > cap;
+        return '<td class="r' + (over ? ' over' : '') + '">' + cell('designations', d.id, 'caps.' + m, { val: (d.caps || {})[m], ph: 'none' }) +
+          '<span class="sub">' + (used > 0 ? fmt(used, state.settings.capBasis === 'cases' ? 0 : 1) + ' done' : '') + '</span></td>';
+      }).join('') + '</tr>';
+    }).join('') + '</tbody></table></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Rate per RVU by modality</h2>' +
+    '<p class="p-sub">Each cell is what one RVU pays. Type in a cell to fix a rate for that grade and modality; clear it to go back to pay per RVU &times; the modality factor below.</p>' +
+    '<div class="p-act"><button class="btn sm ghost" data-act="clear-overrides">Reset to formula</button></div></div>' +
+    '<div class="scroll"><table class="grid matrix"><thead><tr><th>Designation</th>' + mods.map(function (m) { return '<th class="r">' + esc(m) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    '<tr class="mult"><td>Modality factor</td>' + state.modalities.map(function (m, i) {
+      return '<td class="r">' + bind('modalities.' + i + '.mult', m.mult) + '</td>';
+    }).join('') + '</tr>' +
+    state.designations.map(function (d) {
+      return '<tr><td class="strong">' + esc(d.name) + '</td>' + mods.map(function (m) {
+        var ov = has((d.rateOverride || {})[m]) && num(d.rateOverride[m]) > 0;
+        return '<td class="r' + (ov ? ' fixed' : '') + '">' + cell('designations', d.id, 'rateOverride.' + m, { val: (d.rateOverride || {})[m], ph: fmt(effRate(d, m)) }) + '</td>';
+      }).join('') + '</tr>';
+    }).join('') + '</tbody></table></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Modalities</h2><p class="p-sub">Rename or add a modality and it appears everywhere — catalogue, caps, rates, equipment.</p></div>' +
+    '<div class="chips">' + state.modalities.map(function (m, i) {
+      return '<span class="chip">' + bind('modalities.' + i + '.name', m.name, { text: true, cls: 'txt chip-in' }) +
+        '<button class="ico" data-act="del-mod" data-i="' + i + '" title="Remove">&times;</button></span>';
+    }).join('') + '<button class="btn sm" data-act="add-mod">Add modality</button></div></section>';
+  return h;
+}
+
+/* ---------------- RVU catalogue ---------------- */
+function renderMaster(C) {
+  var q = (ui.search || '').toLowerCase();
+  var list = state.services.filter(function (s) {
+    if (!q) return true;
+    return (s.code + ' ' + s.name + ' ' + s.modality).toLowerCase().indexOf(q) > -1;
+  });
+  var profiles = store.get(LS_LIB) || [];
+
+  var h = '<section class="panel"><div class="p-head"><h2>RVU catalogue</h2>' +
+    '<p class="p-sub">' + state.services.length + ' service codes. Only the codes a radiologist actually reports need a volume — everything else stays at zero.</p>' +
+    '<div class="p-act">' +
+    '<button class="btn" data-act="open-import">Paste from Excel</button>' +
+    '<button class="btn ghost sm" data-act="add-svc">Add a code</button>' +
+    '<button class="btn ghost sm" data-act="csv-master">Download CSV</button></div></div>' +
+    '<div class="toolbar"><input class="search" type="search" placeholder="Filter by code, name or modality" data-act="search" data-key="search" value="' + esc(ui.search) + '">' +
+    '<span class="muted">' + list.length + ' shown</span></div>' +
+    '<div class="scroll tall"><table class="grid"><thead><tr><th>Code</th><th>Study</th><th>Modality</th><th class="r">RVU</th>' +
+    '<th class="r">Tariff</th><th class="r">Consumable cost</th><th class="r">Revenue per RVU</th><th class="r">Cases this period</th><th></th></tr></thead><tbody>' +
+    (list.length ? list.map(function (s) {
+      var vol = state.doctors.reduce(function (t, d) { return t + (d.mode === 'quick' ? 0 : num((d.lines || {})[s.id])); }, 0);
+      return '<tr><td>' + cell('services', s.id, 'code', { val: s.code, text: true, cls: 'txt code' }) + '</td>' +
+        '<td>' + cell('services', s.id, 'name', { val: s.name, text: true, cls: 'txt wide' }) + '</td>' +
+        '<td>' + modSelect('services', s.id, s.modality) + '</td>' +
+        '<td class="r">' + cell('services', s.id, 'rvu', { val: s.rvu }) + '</td>' +
+        '<td class="r">' + cell('services', s.id, 'tariff', { val: s.tariff }) + '</td>' +
+        '<td class="r">' + cell('services', s.id, 'cogs', { val: s.cogs }) + '</td>' +
+        '<td class="r muted">' + (num(s.rvu) > 0 ? money(num(s.tariff) / num(s.rvu)) : '—') + '</td>' +
+        '<td class="r' + (vol > 0 ? ' strong' : ' muted') + '">' + (vol > 0 ? fmt(vol) : '·') + '</td>' +
+        '<td class="r"><button class="ico" data-act="del" data-obj="services" data-id="' + s.id + '" title="Remove code">&times;</button></td></tr>';
+    }).join('') : '<tr><td colspan="9" class="empty">Nothing matches that filter. Clear it, or add the code.</td></tr>') +
+    '</tbody></table></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Saved catalogues</h2>' +
+    '<p class="p-sub">Keep one catalogue per unit. Save this one, then load it into another month or another site instead of retyping.</p></div>' +
+    '<div class="p-body"><div class="row-inline">' +
+    '<input class="c-in txt wide" type="text" id="profName" placeholder="Name this catalogue, e.g. Main hospital 2026" data-key="profName">' +
+    '<button class="btn sm" data-act="save-prof">Save catalogue</button></div>' +
+    (profiles.length ? '<table class="grid slim"><tbody>' + profiles.map(function (p, i) {
+      return '<tr><td class="strong">' + esc(p.name) + '</td><td class="muted">' + p.services.length + ' codes · saved ' + esc(p.date) + '</td>' +
+        '<td class="r"><button class="btn sm ghost" data-act="load-prof" data-i="' + i + '">Load</button> ' +
+        '<button class="btn sm ghost" data-act="merge-prof" data-i="' + i + '">Merge in</button> ' +
+        '<button class="ico" data-act="del-prof" data-i="' + i + '">&times;</button></td></tr>';
+    }).join('') + '</tbody></table>' : '<p class="empty">No saved catalogues yet.</p>') +
+    '</div></section>';
+  return h;
+}
+/* ---------------- monthly volumes ---------------- */
+function renderVolumes(C) {
+  var h = '<section class="panel"><div class="p-head"><h2>Monthly volumes</h2>' +
+    '<p class="p-sub">Add only the studies a radiologist actually reported. Two ways in: search a code and type the count, or paste a code-and-count list straight out of the RIS or Excel.</p>' +
+    '<div class="p-act"><button class="btn sm" data-act="add-doc">Add radiologist</button></div></div></section>';
+
+  h += '<datalist id="svcList">' + state.services.map(function (s) {
+    return '<option value="' + esc(s.code + ' — ' + s.name) + '"></option>';
+  }).join('') + '</datalist>';
+
+  h += state.doctors.map(function (d) {
+    var cd = C.docs.filter(function (x) { return x.id === d.id; })[0] || { cases: 0, grossRvu: 0, wage: 0, modRows: [], flags: [] };
+    var open = ui.openDoctor === d.id;
+    var body = '';
+    if (open) {
+      if (d.mode === 'quick') {
+        body = '<div class="scroll"><table class="grid"><thead><tr><th>Modality</th><th class="r">Cases</th>' +
+          '<th class="r">Average RVU per case</th><th class="r">Average tariff</th><th class="r">RVU</th><th class="r">Pay</th></tr></thead><tbody>' +
+          modNames().map(function (m) {
+            var q = (d.quick || {})[m] || {}, a = svcAvg(m);
+            var row = cd.modRows.filter(function (r) { return r.mod === m; })[0];
+            return '<tr><td class="strong">' + esc(m) + '</td>' +
+              '<td class="r">' + cell('doctors', d.id, 'quick.' + m + '.cases', { val: q.cases, ph: '0' }) + '</td>' +
+              '<td class="r">' + cell('doctors', d.id, 'quick.' + m + '.avgRvu', { val: q.avgRvu, ph: fmt(a.rvu, 2) }) + '</td>' +
+              '<td class="r">' + cell('doctors', d.id, 'quick.' + m + '.avgPrice', { val: q.avgPrice, ph: fmt(a.tariff, 0) }) + '</td>' +
+              '<td class="r">' + (row ? fmt(row.rvu, 1) : '·') + '</td>' +
+              '<td class="r strong">' + (row ? money(row.pay) : '·') + '</td></tr>';
+          }).join('') + '</tbody></table></div>' +
+          '<p class="hint">Blended mode uses the average RVU and tariff of every code in that modality unless you type your own. Good for a registrar reading a long tail of plain films.</p>';
+      } else {
+        var rows = Object.keys(d.lines || {});
+        body = '<div class="row-inline add-line">' +
+          '<input class="c-in txt wide" list="svcList" placeholder="Type a code or study name to add it" data-act="add-line" data-id="' + d.id + '" data-key="add|' + d.id + '">' +
+          '<button class="btn sm ghost" data-act="toggle-paste" data-id="' + d.id + '">Paste a volume list</button></div>';
+        if (ui.pasteFor === d.id) {
+          body += '<div class="pastebox"><textarea id="volPaste" rows="6" placeholder="One line per study, code and count separated by a tab or comma:&#10;CT-401&#9;130&#10;MR-510&#9;40"></textarea>' +
+            '<div class="row-inline"><button class="btn sm" data-act="apply-paste" data-id="' + d.id + '">Add these volumes</button>' +
+            '<label class="chk"><input type="checkbox" id="pasteReplace"> Replace what is already there</label>' +
+            '<span class="muted">Matches on code first, then on study name.</span></div></div>';
+        }
+        body += '<div class="scroll"><table class="grid"><thead><tr><th>Code</th><th>Study</th><th>Modality</th><th class="r">RVU each</th>' +
+          '<th class="r">Cases</th><th class="r">RVU</th><th class="r">Pay</th><th></th></tr></thead><tbody>' +
+          (rows.length ? rows.map(function (sid) {
+            var s = svcById(sid);
+            if (!s) return '';
+            var des = desById(d.designationId);
+            var c = num(d.lines[sid]);
+            var row = cd.modRows.filter(function (r) { return r.mod === s.modality; })[0];
+            var factor = row && row.rvu > 0 ? row.payRvu / row.rvu : 1;
+            return '<tr><td class="code">' + esc(s.code) + '</td><td>' + esc(s.name) + '</td><td class="muted">' + esc(s.modality) + '</td>' +
+              '<td class="r muted">' + fmt(s.rvu, 2) + '</td>' +
+              '<td class="r">' + cell('doctors', d.id, 'lines.' + sid, { val: d.lines[sid], ph: '0' }) + '</td>' +
+              '<td class="r">' + fmt(c * num(s.rvu), 1) + '</td>' +
+              '<td class="r">' + money(c * num(s.rvu) * factor * effRate(des, s.modality)) + '</td>' +
+              '<td class="r"><button class="ico" data-act="del-line" data-id="' + d.id + '" data-sid="' + sid + '">&times;</button></td></tr>';
+          }).join('') : '<tr><td colspan="8" class="empty">No studies yet. Search above, or paste a list from the RIS.</td></tr>') +
+          '</tbody></table></div>';
+      }
+      if (cd.modRows.length) {
+        body += '<div class="scroll"><table class="grid sum"><thead><tr><th>Modality</th><th class="r">Cases</th><th class="r">RVU</th>' +
+          '<th class="r">Cap</th><th class="r">Payable RVU</th><th class="r">Rate</th><th class="r">Pay</th></tr></thead><tbody>' +
+          cd.modRows.map(function (r) {
+            return '<tr' + (r.capped ? ' class="over"' : '') + '><td>' + esc(r.mod) + '</td><td class="r">' + fmt(r.cases) + '</td>' +
+              '<td class="r">' + fmt(r.rvu, 1) + '</td><td class="r muted">' + (r.cap > 0 ? fmt(r.cap) + (r.capped ? ' · ' + fmt(r.over, 0) + ' over' : '') : '—') + '</td>' +
+              '<td class="r">' + fmt(r.payRvu, 1) + '</td><td class="r">' + money(r.rate) + '</td><td class="r strong">' + money(r.pay) + '</td></tr>';
+          }).join('') + '</tbody><tfoot><tr><td>Pay before pool</td><td class="r">' + fmt(cd.cases) + '</td><td class="r">' + fmt(cd.grossRvu, 1) + '</td>' +
+          '<td></td><td class="r">' + fmt(cd.payRvu, 1) + '</td><td></td><td class="r">' + money(cd.wage) + '</td></tr></tfoot></table></div>';
+      }
+      body += '<div class="doc-foot"><label class="fld">Fixed monthly component ' + cell('doctors', d.id, 'fixed', { val: d.fixed, ph: '0' }) + '</label>' +
+        '<label class="chk"><input type="checkbox" data-act="inpool" data-id="' + d.id + '"' + (d.inPool !== false ? ' checked' : '') + '> Shares in the pool</label>' +
+        '<button class="btn sm ghost danger" data-act="del" data-obj="doctors" data-id="' + d.id + '">Remove radiologist</button></div>';
+    }
+    return '<section class="doc' + (open ? ' open' : '') + '">' +
+      '<div class="doc-head" data-act="open-doc" data-id="' + d.id + '">' +
+      '<span class="caret">' + (open ? '&minus;' : '+') + '</span>' +
+      '<span class="doc-n">' + cell('doctors', d.id, 'name', { val: d.name, text: true, cls: 'txt name' }) + '</span>' +
+      '<span class="doc-d">' + sel('data-obj="doctors" data-id="' + d.id + '" data-f="designationId"',
+        state.designations.map(function (x) { return [x.id, x.name]; }), d.designationId) + '</span>' +
+      '<span class="doc-m"><span class="seg tiny">' +
+      '<button class="' + (d.mode !== 'quick' ? 'on' : '') + '" data-act="mode" data-id="' + d.id + '" data-v="detailed">By code</button>' +
+      '<button class="' + (d.mode === 'quick' ? 'on' : '') + '" data-act="mode" data-id="' + d.id + '" data-v="quick">Blended</button></span></span>' +
+      '<span class="doc-s">' + fmt(cd.cases) + ' cases</span>' +
+      '<span class="doc-s">' + fmt(cd.grossRvu, 1) + ' RVU</span>' +
+      '<span class="doc-s strong">' + money(cd.wage) + '</span>' +
+      (cd.flags.length ? '<span class="pill warn">capped</span>' : '') +
+      '</div>' + (open ? '<div class="doc-body">' + body + '</div>' : '') + '</section>';
+  }).join('');
+  return h;
+}
+
+/* ---------------- equipment ---------------- */
+function renderEquip(C) {
+  var h = '<section class="panel"><div class="p-head"><h2>Equipment</h2>' +
+    '<p class="p-sub">Revenue, consumables and radiologist pay follow the modality, then split across machines of that modality by the share weight. Give two CT scanners weights of 2 and 1 and the busier one carries two thirds.</p>' +
+    '<div class="p-act"><button class="btn sm" data-act="add-eq">Add equipment</button></div></div>' +
+    '<div class="scroll"><table class="grid"><thead><tr><th>Machine</th><th>Modality</th><th class="r">Share weight</th>' +
+    '<th class="r">Capacity, cases per month</th><th class="r">Capital cost</th><th class="r">Accumulated depreciation</th>' +
+    '<th class="r">Life, years</th><th class="r">Salvage %</th><th class="r">Maintenance per year</th><th class="r">Working capital %</th><th></th></tr></thead><tbody>' +
+    state.equipment.map(function (e) {
+      return '<tr><td>' + cell('equipment', e.id, 'name', { val: e.name, text: true, cls: 'txt wide' }) + '</td>' +
+        '<td>' + modSelect('equipment', e.id, e.modality) + '</td>' +
+        '<td class="r">' + cell('equipment', e.id, 'weight', { val: e.weight }) + '</td>' +
+        '<td class="r">' + cell('equipment', e.id, 'capacity', { val: e.capacity, ph: '0' }) + '</td>' +
+        '<td class="r">' + cell('equipment', e.id, 'capex', { val: e.capex }) + '<span class="sub">' + short(num(e.capex)) + '</span></td>' +
+        '<td class="r">' + cell('equipment', e.id, 'accumDep', { val: e.accumDep }) + '<span class="sub">written down to ' + short(Math.max(num(e.capex) - num(e.accumDep), num(e.capex) * num(e.salvagePct) / 100)) + '</span></td>' +
+        '<td class="r">' + cell('equipment', e.id, 'life', { val: e.life }) + '</td>' +
+        '<td class="r">' + cell('equipment', e.id, 'salvagePct', { val: e.salvagePct }) + '</td>' +
+        '<td class="r">' + cell('equipment', e.id, 'cmcAnnual', { val: e.cmcAnnual }) + '<span class="sub">' + short(num(e.cmcAnnual) / 12) + ' a month</span></td>' +
+        '<td class="r">' + cell('equipment', e.id, 'wcPct', { val: e.wcPct }) + '</td>' +
+        '<td class="r"><button class="ico" data-act="del" data-obj="equipment" data-id="' + e.id + '">&times;</button></td></tr>';
+    }).join('') + '</tbody></table></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Machine-level P&amp;L and return on capital</h2>' +
+    '<p class="p-sub">Capital employed is written-down value plus working capital. Return on capital employed annualises this month&rsquo;s EBIT against it.</p>' +
+    '<div class="p-act"><button class="btn sm ghost" data-act="csv-equip">Download CSV</button></div></div>' +
+    '<div class="scroll"><table class="grid"><thead><tr><th>Machine</th><th class="r">Cases</th><th class="r">Utilisation</th>' +
+    '<th class="r">Net revenue</th><th class="r">Consumables</th><th class="r">Radiologist pay</th><th class="r">Maintenance</th>' +
+    '<th class="r">Allocated overhead</th><th class="r">EBITDA</th><th class="r">Depreciation</th><th class="r">EBIT</th>' +
+    '<th class="r">Written-down value</th><th class="r">Capital employed</th><th class="r">ROCE</th><th class="r">Payback, years</th><th class="r">Break-even cases</th></tr></thead><tbody>' +
+    C.equip.map(function (e) {
+      return '<tr><td class="strong">' + esc(e.name) + '</td><td class="r">' + fmt(e.cases) + '</td>' +
+        '<td class="r">' + (e.capacity > 0 ? '<span class="minibar' + (e.util > 90 ? ' hot' : '') + '"><i style="width:' + Math.min(100, e.util).toFixed(0) + '%"></i></span>' + pct(e.util, 0) : '—') + '</td>' +
+        '<td class="r">' + short(e.revenue) + '</td><td class="r">' + short(e.cogs) + '</td><td class="r">' + short(e.wages) + '</td>' +
+        '<td class="r">' + short(e.cmc) + '</td><td class="r">' + short(e.indirect) + '</td>' +
+        '<td class="r' + (e.ebitda < 0 ? ' neg' : '') + '">' + short(e.ebitda) + '</td>' +
+        '<td class="r">' + short(e.dep) + '</td>' +
+        '<td class="r strong' + (e.ebit < 0 ? ' neg' : '') + '">' + short(e.ebit) + '</td>' +
+        '<td class="r muted">' + short(e.nbv) + '</td><td class="r">' + short(e.ce) + '</td>' +
+        '<td class="r strong ' + (e.roce >= 20 ? 'pos' : (e.roce < 0 ? 'neg' : '')) + '">' + pct(e.roce) + '</td>' +
+        '<td class="r">' + (e.payback ? fmt(e.payback, 1) : '—') + '</td>' +
+        '<td class="r">' + (e.beCases ? fmt(e.beCases, 0) : '—') + '</td></tr>';
+    }).join('') + '</tbody></table></div></section>';
+  return h;
+}
+
+/* ---------------- P&L and pool ---------------- */
+function renderPL(C) {
+  var pl = C.pl, P = state.pl;
+  function row(label, val, opts) {
+    opts = opts || {};
+    return '<tr class="' + (opts.cls || '') + '"><td>' + label + (opts.note ? '<span class="sub">' + opts.note + '</span>' : '') + '</td>' +
+      '<td class="r">' + (opts.input ? opts.input : '<span class="ro">' + money(val) + '</span>') + '</td>' +
+      '<td class="r muted">' + (pl.net > 0 && opts.showPct !== false ? pct(val / pl.net * 100) : '') + '</td></tr>';
+  }
+  var h = '<section class="panel"><div class="p-head"><h2>Departmental profit and loss</h2>' +
+    '<p class="p-sub">Grey figures come from the volumes and the catalogue. White boxes are yours to fill in.</p>' +
+    '<div class="p-act"><span class="seg">' +
+    '<button class="' + (P.revenueMode !== 'manual' ? 'on' : '') + '" data-act="revmode" data-v="auto">Revenue from volumes</button>' +
+    '<button class="' + (P.revenueMode === 'manual' ? 'on' : '') + '" data-act="revmode" data-v="manual">Revenue typed in</button></span></div></div>' +
+    '<div class="scroll"><table class="grid pl"><thead><tr><th>Line</th><th class="r">This period</th><th class="r">% of net revenue</th></tr></thead><tbody>' +
+    row('Gross billing' + (P.revenueMode === 'manual' ? '' : ' from ' + fmt(C.totals.cases) + ' cases'), pl.gross - num(P.otherRevenue),
+      P.revenueMode === 'manual' ? { input: bind('pl.grossOverride', P.grossOverride), note: 'volumes would give ' + short(pl.grossAuto) } : { note: 'cases &times; tariff in the catalogue' }) +
+    row('Other income', num(P.otherRevenue), { input: bind('pl.otherRevenue', P.otherRevenue, { ph: '0' }) }) +
+    row('Less: discounts, package deductions and bad debt', -pl.deductions, { input: bind('pl.deductionPct', P.deductionPct) + '<span class="suf">%</span>', cls: 'neg-row' }) +
+    row('Net revenue', pl.net, { cls: 'total' }) +
+    row('Consumables and film from the catalogue', C.totals.cogs, { note: 'contrast, film, biopsy kits per case' }) +
+    row('Other direct cost of goods', num(P.cogsExtra), { input: bind('pl.cogsExtra', P.cogsExtra, { ph: '0' }) }) +
+    row('Radiologist pay', pl.wages, { note: 'RVU pay, fixed components and guarantee top-ups', cls: 'hi' }) +
+    row('Technologists, nursing and clerical', pl.staff, { input: bind('pl.staffCost', P.staffCost, { ph: '0' }) }) +
+    row('Maintenance contracts', pl.cmc, { note: 'annual contracts on the equipment tab, divided by twelve' }) +
+    row('Additional maintenance', num(P.cmcExtra), { input: bind('pl.cmcExtra', P.cmcExtra, { ph: '0' }) }) +
+    row('Depreciation', pl.dep, { note: 'straight line on the equipment tab' }) +
+    row('Other departmental costs', pl.other, { input: bind('pl.otherCosts', P.otherCosts, { ph: '0' }), note: 'space, utilities, administration share' }) +
+    row('Departmental surplus before pool', pl.surplus, { cls: 'total big' }) +
+    row('Surplus before depreciation', pl.ebitda, { cls: 'sub-total' }) +
+    '</tbody></table></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Pool payout</h2>' +
+    '<p class="p-sub">The share of surplus handed back to the reporting radiologists, on top of their RVU pay.</p></div>' +
+    '<div class="p-body"><div class="pool-set">' +
+    '<label class="fld">Share of surplus into the pool ' + bind('pl.poolPct', P.poolPct) + '<span class="suf">%</span></label>' +
+    '<label class="fld">Split by ' + sel('data-bind="pl.poolBasis"', [['rvu', 'Payable RVU'], ['wage', 'Pay earned'], ['equal', 'Equal shares']], P.poolBasis) + '</label>' +
+    '<span class="fld ro-fld">Pool ' + money(C.pool.amount) + '</span>' +
+    '<span class="fld ro-fld">Retained by the unit ' + money(C.pool.retained) + '</span>' +
+    '</div>' +
+    (pl.surplus <= 0 ? '<div class="alert">The department is not in surplus this period, so there is nothing to pool. Check tariffs, volumes or the cost lines above.</div>' : '') +
+    '<div class="scroll"><table class="grid"><thead><tr><th>Radiologist</th><th>Designation</th><th class="r">Pool weight</th>' +
+    '<th class="r">Basis</th><th class="r">Share</th><th class="r">Pool payout</th><th class="r">RVU pay</th><th class="r">Total pay</th></tr></thead><tbody>' +
+    C.pool.rows.map(function (r) {
+      var d = C.docs.filter(function (x) { return x.id === r.id; })[0];
+      return '<tr' + (r.inPool ? '' : ' class="off"') + '><td class="strong">' + esc(r.name) + '</td><td class="muted">' + esc(r.des) + '</td>' +
+        '<td class="r muted">' + fmt(num(d.des.poolWeight), 2) + '</td>' +
+        '<td class="r">' + (r.inPool ? fmt(r.basis, 1) : 'not in pool') + '</td>' +
+        '<td class="r">' + pct(r.share * 100) + '</td><td class="r">' + money(r.amount) + '</td>' +
+        '<td class="r muted">' + money(d.wage) + '</td><td class="r strong">' + money(d.totalComp) + '</td></tr>';
+    }).join('') + '</tbody></table></div></div></section>';
+
+  h += '<section class="panel"><div class="p-head"><h2>Unit details</h2></div><div class="p-body"><div class="pool-set">' +
+    '<label class="fld">Unit ' + bind('settings.unit', state.settings.unit, { text: true, cls: 'txt wide' }) + '</label>' +
+    '<label class="fld">Period ' + bind('settings.period', state.settings.period, { text: true, cls: 'txt' }) + '</label>' +
+    '<label class="fld">Currency symbol ' + bind('settings.currency', state.settings.currency, { text: true, cls: 'txt tiny-in' }) + '</label>' +
+    '<label class="fld">Number format ' + sel('data-bind="settings.locale"', [['en-IN', 'Indian, lakh and crore'], ['en-US', 'International, thousands']], state.settings.locale) + '</label>' +
+    '</div></div></section>';
+  return h;
+}
+
+/* ---------------- import from Excel ---------------- */
+var FIELD_OPTS = [['ignore', 'Skip this column'], ['code', 'Code'], ['name', 'Study name'], ['modality', 'Modality'],
+['rvu', 'RVU'], ['tariff', 'Tariff'], ['cogs', 'Consumable cost']];
+
+function parseTable(text) {
+  var lines = String(text).replace(/\r/g, '').split('\n').filter(function (l) { return l.trim() !== ''; });
+  if (!lines.length) return [];
+  var d = lines[0].indexOf('\t') > -1 ? '\t' : (lines[0].split(',').length >= lines[0].split(';').length ? ',' : ';');
+  return lines.map(function (l) {
+    return l.split(d).map(function (c) { return c.trim().replace(/^"|"$/g, ''); });
+  });
+}
+function guessField(header, colIndex, sample) {
+  var h = String(header || '').toLowerCase();
+  if (/(^|\b)(code|cpt|item|service ?id|charge ?code)/.test(h)) return 'code';
+  if (/(modality|mod\b|equip|machine)/.test(h)) return 'modality';
+  if (/(rvu|point|weight|unit value|complexity)/.test(h)) return 'rvu';
+  if (/(tariff|price|rate|charge|amount|mrp|gross)/.test(h)) return 'tariff';
+  if (/(consumab|cogs|contrast|material|direct cost)/.test(h)) return 'cogs';
+  if (/(name|description|study|exam|procedure|service|test)/.test(h)) return 'name';
+  var allNum = sample.every(function (v) { return v !== '' && isFinite(parseFloat(v)); });
+  if (allNum) return colIndex === 0 ? 'ignore' : 'rvu';
+  return colIndex === 0 ? 'code' : 'name';
+}
+function renderImport() {
+  if (!ui.importOpen) return '';
+  var rows = ui.importRows;
+  var body;
+  if (!rows) {
+    body = '<p class="p-sub">Copy the columns out of your spreadsheet and paste them here. Tab, comma or semicolon separated, with or without a header row.</p>' +
+      '<textarea id="impText" rows="10" placeholder="Code&#9;Study&#9;Modality&#9;RVU&#9;Tariff&#10;CT-401&#9;Head plain&#9;CT&#9;1.2&#9;2500"></textarea>' +
+      '<div class="row-inline"><button class="btn" data-act="imp-parse">Read the columns</button>' +
+      '<button class="btn ghost" data-act="imp-close">Cancel</button></div>';
+  } else {
+    var head = ui.importHeader ? rows[0] : rows[0].map(function (_, i) { return 'Column ' + (i + 1); });
+    var preview = rows.slice(ui.importHeader ? 1 : 0, ui.importHeader ? 6 : 5);
+    body = '<p class="p-sub">Tell each column what it is. ' + (rows.length - (ui.importHeader ? 1 : 0)) + ' rows ready.</p>' +
+      '<label class="chk"><input type="checkbox" data-act="imp-header"' + (ui.importHeader ? ' checked' : '') + '> First row is a header</label>' +
+      '<div class="scroll"><table class="grid"><thead><tr>' + head.map(function (hd, i) {
+        return '<th>' + sel('data-act="imp-map" data-i="' + i + '"', FIELD_OPTS, ui.importMap[i]) + '<span class="sub">' + esc(hd) + '</span></th>';
+      }).join('') + '</tr></thead><tbody>' + preview.map(function (r) {
+        return '<tr>' + head.map(function (_, i) { return '<td class="muted">' + esc(r[i] || '') + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="row-inline"><span class="seg">' +
+      '<button class="' + (ui.importMode === 'merge' ? 'on' : '') + '" data-act="imp-mode" data-v="merge">Update by code, add what is new</button>' +
+      '<button class="' + (ui.importMode === 'replace' ? 'on' : '') + '" data-act="imp-mode" data-v="replace">Replace the whole catalogue</button></span></div>' +
+      '<div class="row-inline"><button class="btn" data-act="imp-apply">Import these codes</button>' +
+      '<button class="btn ghost" data-act="imp-back">Back to the paste box</button>' +
+      '<button class="btn ghost" data-act="imp-close">Cancel</button></div>';
+  }
+  return '<div class="overlay" data-act="imp-close-bg"><div class="modal">' +
+    '<div class="p-head"><h2>Bring RVUs in from a spreadsheet</h2></div><div class="p-body">' + body + '</div></div></div>';
+}
+function applyImport() {
+  var rows = ui.importRows.slice(ui.importHeader ? 1 : 0);
+  var map = ui.importMap;
+  var out = [], added = 0, updated = 0;
+  rows.forEach(function (r) {
+    var o = { code: '', name: '', modality: '', rvu: '', tariff: '', cogs: '' };
+    map.forEach(function (f, i) { if (f && f !== 'ignore') o[f] = r[i] === undefined ? '' : r[i]; });
+    if (!o.code && !o.name) return;
+    if (!o.code) o.code = o.name.slice(0, 12).toUpperCase().replace(/\s+/g, '-');
+    if (!o.name) o.name = o.code;
+    o.modality = normMod(o.modality) || 'Other';
+    out.push(o);
+  });
+  if (!out.length) { toast('Nothing to import — check the column mapping.'); return; }
+  out.forEach(function (o) {
+    if (state.modalities.filter(function (m) { return m.name === o.modality; }).length === 0) {
+      state.modalities.push({ name: o.modality, mult: 1 });
+    }
+  });
+  if (ui.importMode === 'replace') {
+    state.services = out.map(function (o) {
+      return { id: uid('s'), code: o.code, name: o.name, modality: o.modality, rvu: num(o.rvu), tariff: num(o.tariff), cogs: num(o.cogs) };
+    });
+    state.doctors.forEach(function (d) { d.lines = {}; });
+    added = out.length;
+  } else {
+    out.forEach(function (o) {
+      var ex = state.services.filter(function (s) { return String(s.code).toLowerCase() === String(o.code).toLowerCase(); })[0];
+      if (ex) {
+        if (o.name) ex.name = o.name;
+        if (o.modality) ex.modality = o.modality;
+        if (has(o.rvu)) ex.rvu = num(o.rvu);
+        if (has(o.tariff)) ex.tariff = num(o.tariff);
+        if (has(o.cogs)) ex.cogs = num(o.cogs);
+        updated++;
+      } else {
+        state.services.push({ id: uid('s'), code: o.code, name: o.name, modality: o.modality, rvu: num(o.rvu), tariff: num(o.tariff), cogs: num(o.cogs) });
+        added++;
+      }
+    });
+  }
+  ui.importOpen = false; ui.importRows = null;
+  toast(added + ' codes added' + (updated ? ', ' + updated + ' updated' : '') + '.');
+}
+
+/* ---------------- csv + files ---------------- */
+function csvEsc(v) { var s = String(v === null || v === undefined ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function download(name, text, type) {
+  var b = new Blob([text], { type: type || 'text/plain;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function csvPayout(C) {
+  var rows = [['Radiologist', 'Designation', 'Cases', 'RVU', 'Payable RVU', 'RVU pay', 'Fixed', 'Guarantee top-up', 'Pool share', 'Total pay', 'Pay per RVU', 'Revenue generated']];
+  C.docs.forEach(function (d) {
+    rows.push([d.name, d.des.name, d.cases, d.grossRvu.toFixed(2), d.payRvu.toFixed(2), Math.round(d.variable), Math.round(d.fixed),
+    Math.round(d.topUp), Math.round(d.pool), Math.round(d.totalComp), d.perRvu.toFixed(2), Math.round(d.revenue)]);
+  });
+  download('radiologist-payout-' + (state.settings.period || '').replace(/\s+/g, '-') + '.csv',
+    rows.map(function (r) { return r.map(csvEsc).join(','); }).join('\n'), 'text/csv');
+}
+function csvMaster() {
+  var rows = [['Code', 'Study', 'Modality', 'RVU', 'Tariff', 'Consumable cost']];
+  state.services.forEach(function (s) { rows.push([s.code, s.name, s.modality, s.rvu, s.tariff, s.cogs]); });
+  download('rvu-catalogue.csv', rows.map(function (r) { return r.map(csvEsc).join(','); }).join('\n'), 'text/csv');
+}
+function csvEquip(C) {
+  var rows = [['Machine', 'Modality', 'Cases', 'Utilisation %', 'Net revenue', 'Consumables', 'Radiologist pay', 'Maintenance', 'Allocated overhead', 'EBITDA', 'Depreciation', 'EBIT', 'Written-down value', 'Capital employed', 'ROCE %', 'Payback years', 'Break-even cases']];
+  C.equip.forEach(function (e) {
+    rows.push([e.name, e.modality, Math.round(e.cases), e.util.toFixed(1), Math.round(e.revenue), Math.round(e.cogs), Math.round(e.wages),
+    Math.round(e.cmc), Math.round(e.indirect), Math.round(e.ebitda), Math.round(e.dep), Math.round(e.ebit),
+    Math.round(e.nbv), Math.round(e.ce), e.roce.toFixed(1), e.payback ? e.payback.toFixed(1) : '', e.beCases ? Math.round(e.beCases) : '']);
+  });
+  download('equipment-roce.csv', rows.map(function (r) { return r.map(csvEsc).join(','); }).join('\n'), 'text/csv');
+}
+
+/* ---------------- state writing ---------------- */
+function setPath(obj, path, val) {
+  var p = path.split('.'), o = obj;
+  for (var i = 0; i < p.length - 1; i++) {
+    if (o[p[i]] === undefined || o[p[i]] === null || typeof o[p[i]] !== 'object') o[p[i]] = {};
+    o = o[p[i]];
+  }
+  o[p[p.length - 1]] = val;
+}
+function setField(objName, id, field, val) {
+  var arr = state[objName];
+  if (!arr) return;
+  var item = arr.filter(function (x) { return x.id === id; })[0];
+  if (!item) return;
+  setPath(item, field, val);
+}
+function readTarget(t, val) {
+  if (t.hasAttribute('data-bind')) setPath(state, t.getAttribute('data-bind'), val);
+  else if (t.hasAttribute('data-obj')) setField(t.getAttribute('data-obj'), t.getAttribute('data-id'), t.getAttribute('data-f'), val);
+  else return false;
+  return true;
+}
+function toast(msg) {
+  ui.msg = msg;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function () { ui.msg = ''; var n = document.getElementById('toast'); if (n) n.className = 'toast'; }, 3200);
+  var n = document.getElementById('toast');
+  if (n) { n.textContent = msg; n.className = 'toast show'; }
+}
+
+/* ---------------- render ---------------- */
+var TABS = [['dash', 'Overview'], ['volumes', 'Monthly volumes'], ['master', 'RVU catalogue'],
+['rates', 'Pay rates and caps'], ['equip', 'Equipment and ROCE'], ['pl', 'P&amp;L and pool']];
+
+function render() {
+  var a = document.activeElement;
+  var key = a && a.getAttribute ? a.getAttribute('data-key') : null;
+  var ss = null, se = null;
+  try { ss = a.selectionStart; se = a.selectionEnd; } catch (e) { }
+  var sy = window.scrollY;
+
+  var C = compute();
+  document.getElementById('ledger').innerHTML = ledgerHTML(C);
+  document.getElementById('unitName').textContent = state.settings.unit || 'Radiology';
+  document.getElementById('unitPeriod').textContent = state.settings.period || '';
+  document.getElementById('tabs').innerHTML = TABS.map(function (t) {
+    return '<button class="tab' + (ui.tab === t[0] ? ' on' : '') + '" data-act="tab" data-tab="' + t[0] + '">' + t[1] + '</button>';
+  }).join('');
+
+  var v = document.getElementById('view');
+  v.innerHTML = ui.tab === 'dash' ? renderDash(C)
+    : ui.tab === 'rates' ? renderRates(C)
+      : ui.tab === 'master' ? renderMaster(C)
+        : ui.tab === 'volumes' ? renderVolumes(C)
+          : ui.tab === 'equip' ? renderEquip(C)
+            : renderPL(C);
+  document.getElementById('modal').innerHTML = renderImport();
+
+  if (key) {
+    var n = document.querySelector('[data-key="' + key + '"]');
+    if (n && n !== document.activeElement) {
+      n.focus();
+      if (ss !== null && n.setSelectionRange) { try { n.setSelectionRange(ss, se); } catch (e) { } }
+    }
+  }
+  window.scrollTo(0, sy);
+  saveState();
+}
+
+/* ---------------- events ---------------- */
+function onEdit(e, full) {
+  var t = e.target;
+  if (!t || !t.getAttribute) return;
+  if (t.getAttribute('data-act') === 'search') { ui.search = t.value; render(); return; }
+  if (t.id === 'profName' || t.id === 'impText' || t.id === 'volPaste') return;
+  if (readTarget(t, t.value)) render();
+}
+function findService(text) {
+  var q = String(text || '').trim().toLowerCase();
+  if (!q) return null;
+  var byLabel = state.services.filter(function (s) { return (s.code + ' — ' + s.name).toLowerCase() === q; })[0];
+  if (byLabel) return byLabel;
+  var byCode = state.services.filter(function (s) { return String(s.code).toLowerCase() === q; })[0];
+  if (byCode) return byCode;
+  var byName = state.services.filter(function (s) { return String(s.name).toLowerCase() === q; })[0];
+  if (byName) return byName;
+  var part = state.services.filter(function (s) { return (s.code + ' ' + s.name).toLowerCase().indexOf(q) > -1; });
+  return part.length === 1 ? part[0] : null;
+}
+function applyVolumePaste(docId) {
+  var d = state.doctors.filter(function (x) { return x.id === docId; })[0];
+  var ta = document.getElementById('volPaste');
+  if (!d || !ta) return;
+  var rep = document.getElementById('pasteReplace');
+  if (rep && rep.checked) d.lines = {};
+  var rows = parseTable(ta.value), ok = 0, miss = [];
+  rows.forEach(function (r) {
+    if (r.length < 2) return;
+    var count = null, keyCell = null;
+    for (var i = r.length - 1; i >= 0; i--) {
+      if (r[i] !== '' && isFinite(parseFloat(r[i].replace(/,/g, '')))) { count = num(r[i]); break; }
+    }
+    keyCell = r[0];
+    var s = findService(keyCell) || findService(r[1]);
+    if (!s || count === null) { if (r[0] && !/^(code|item|service)/i.test(r[0])) miss.push(r[0]); return; }
+    d.lines[s.id] = num(d.lines[s.id]) + count;
+    ok++;
+  });
+  toast(ok + ' lines added' + (miss.length ? '. Not matched: ' + miss.slice(0, 4).join(', ') + (miss.length > 4 ? '…' : '') : '.'));
+  ui.pasteFor = null;
+  render();
+}
+function onClick(e) {
+  var t = e.target.closest ? e.target.closest('[data-act]') : null;
+  if (!t) return;
+  var tag = e.target.tagName;
+  if (t !== e.target && (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'LABEL')) return;
+  var act = t.getAttribute('data-act'), id = t.getAttribute('data-id'), i = parseInt(t.getAttribute('data-i'), 10);
+  if (act === 'search' || act === 'add-line' || act === 'imp-map' || act === 'imp-header') return;
+  switch (act) {
+    case 'tab': ui.tab = t.getAttribute('data-tab'); break;
+    case 'capbasis': state.settings.capBasis = t.getAttribute('data-v'); break;
+    case 'revmode': state.pl.revenueMode = t.getAttribute('data-v'); break;
+    case 'mode': {
+      var d = state.doctors.filter(function (x) { return x.id === id; })[0];
+      if (d) { d.mode = t.getAttribute('data-v'); ui.openDoctor = id; }
+      break;
+    }
+    case 'open-doc': ui.openDoctor = ui.openDoctor === id ? null : id; break;
+    case 'inpool': {
+      var dd = state.doctors.filter(function (x) { return x.id === id; })[0];
+      if (dd) dd.inPool = !(dd.inPool !== false);
+      break;
+    }
+    case 'toggle-paste': ui.pasteFor = ui.pasteFor === id ? null : id; break;
+    case 'apply-paste': applyVolumePaste(id); return;
+    case 'del-line': {
+      var dl = state.doctors.filter(function (x) { return x.id === id; })[0];
+      if (dl) delete dl.lines[t.getAttribute('data-sid')];
+      break;
+    }
+    case 'del': {
+      var obj = t.getAttribute('data-obj');
+      state[obj] = state[obj].filter(function (x) { return x.id !== id; });
+      if (obj === 'services') state.doctors.forEach(function (x) { delete x.lines[id]; });
+      break;
+    }
+    case 'add-svc': state.services.unshift({ id: uid('s'), code: '', name: '', modality: modNames()[0], rvu: '', tariff: '', cogs: 0 }); ui.search = ''; break;
+    case 'add-doc': {
+      var nd = { id: uid('dr'), name: 'New radiologist', designationId: state.designations[0].id, fixed: 0, mode: 'detailed', inPool: true, lines: {}, quick: {} };
+      state.doctors.push(nd); ui.openDoctor = nd.id; ui.tab = 'volumes';
+      break;
+    }
+    case 'add-des': state.designations.push({ id: uid('des'), name: 'New designation', base: 200, guarantee: 0, excessPct: 0, poolWeight: 1, caps: {}, rateOverride: {} }); break;
+    case 'add-eq': state.equipment.push({ id: uid('eq'), name: 'New machine', modality: modNames()[0], weight: 1, capex: 0, accumDep: 0, life: 10, salvagePct: 5, cmcAnnual: 0, wcPct: 5, capacity: 0 }); break;
+    case 'add-mod': state.modalities.push({ name: 'New modality', mult: 1 }); break;
+    case 'del-mod': state.modalities.splice(i, 1); break;
+    case 'clear-overrides': state.designations.forEach(function (d) { d.rateOverride = {}; }); toast('Rates back to pay per RVU times the modality factor.'); break;
+    case 'open-import': ui.importOpen = true; ui.importRows = null; break;
+    case 'imp-close': case 'imp-close-bg':
+      if (act === 'imp-close-bg' && e.target.className !== 'overlay') return;
+      ui.importOpen = false; ui.importRows = null; break;
+    case 'imp-back': ui.importRows = null; break;
+    case 'imp-mode': ui.importMode = t.getAttribute('data-v'); break;
+    case 'imp-parse': {
+      var txt = (document.getElementById('impText') || {}).value || '';
+      var rows = parseTable(txt);
+      if (!rows.length) { toast('Nothing pasted yet.'); return; }
+      ui.importRows = rows;
+      var first = rows[0];
+      ui.importHeader = first.some(function (c) { return c && !isFinite(parseFloat(c)); }) && rows.length > 1;
+      ui.importMap = first.map(function (hd, ix) {
+        var sample = rows.slice(ui.importHeader ? 1 : 0, 6).map(function (r) { return r[ix] || ''; });
+        return guessField(ui.importHeader ? hd : '', ix, sample);
+      });
+      break;
+    }
+    case 'imp-apply': applyImport(); break;
+    case 'save-prof': {
+      var nm = (document.getElementById('profName') || {}).value || '';
+      if (!nm.trim()) { toast('Give the catalogue a name first.'); return; }
+      var libs = store.get(LS_LIB) || [];
+      libs.push({ name: nm.trim(), date: new Date().toLocaleDateString(), services: JSON.parse(JSON.stringify(state.services)), modalities: JSON.parse(JSON.stringify(state.modalities)) });
+      store.set(LS_LIB, libs); toast('Saved.');
+      break;
+    }
+    case 'load-prof': case 'merge-prof': {
+      var lib = (store.get(LS_LIB) || [])[i];
+      if (!lib) return;
+      (lib.modalities || []).forEach(function (m) {
+        if (!state.modalities.filter(function (x) { return x.name === m.name; }).length) state.modalities.push(m);
+      });
+      if (act === 'load-prof') {
+        if (!confirm('Load "' + lib.name + '"? The current catalogue and every volume entered against it will be cleared.')) return;
+        state.services = JSON.parse(JSON.stringify(lib.services));
+        state.doctors.forEach(function (d) { d.lines = {}; });
+        toast('Catalogue loaded.');
+      } else {
+        var addn = 0;
+        lib.services.forEach(function (s) {
+          var ex = state.services.filter(function (x) { return String(x.code).toLowerCase() === String(s.code).toLowerCase(); })[0];
+          if (ex) { ex.rvu = s.rvu; ex.tariff = s.tariff; ex.cogs = s.cogs; ex.modality = s.modality; }
+          else { state.services.push(Object.assign({}, s, { id: uid('s') })); addn++; }
+        });
+        toast('Merged, ' + addn + ' new codes.');
+      }
+      break;
+    }
+    case 'del-prof': {
+      var l2 = store.get(LS_LIB) || []; l2.splice(i, 1); store.set(LS_LIB, l2); break;
+    }
+    case 'csv-payout': csvPayout(compute()); return;
+    case 'csv-master': csvMaster(); return;
+    case 'csv-equip': csvEquip(compute()); return;
+    case 'save-json': download('radiology-rvu-model.json', JSON.stringify(state, null, 2), 'application/json'); return;
+    case 'load-json': document.getElementById('fileIn').click(); return;
+    case 'print': window.print(); return;
+    case 'reset':
+      if (!confirm('Clear everything and go back to the sample model?')) return;
+      state = seed(); ui.openDoctor = null; toast('Back to the sample model.');
+      break;
+    default: return;
+  }
+  render();
+}
+
+function boot() {
+  loadState();
+  document.addEventListener('input', function (e) { onEdit(e, false); });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.getAttribute && t.getAttribute('data-act') === 'add-line') {
+      var s = findService(t.value);
+      var d = state.doctors.filter(function (x) { return x.id === t.getAttribute('data-id'); })[0];
+      if (s && d) { if (!num(d.lines[s.id])) d.lines[s.id] = ''; t.value = ''; render(); }
+      else if (t.value) toast('No single match for that — try the code.');
+      return;
+    }
+    if (t.getAttribute && t.getAttribute('data-act') === 'imp-map') { ui.importMap[parseInt(t.getAttribute('data-i'), 10)] = t.value; return; }
+    if (t.getAttribute && t.getAttribute('data-act') === 'imp-header') {
+      ui.importHeader = t.checked;
+      ui.importMap = ui.importRows[0].map(function (hd, ix) {
+        return guessField(ui.importHeader ? hd : '', ix, ui.importRows.slice(ui.importHeader ? 1 : 0, 6).map(function (r) { return r[ix] || ''; }));
+      });
+      render(); return;
+    }
+    if (t.tagName === 'SELECT') { if (readTarget(t, t.value)) render(); return; }
+    onEdit(e, true);
+  });
+  document.addEventListener('click', onClick);
+  document.getElementById('fileIn').addEventListener('change', function (e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try { state = migrate(JSON.parse(r.result)); render(); toast('Model loaded.'); }
+      catch (err) { toast('That file could not be read as a saved model.'); }
+    };
+    r.readAsText(f);
+    e.target.value = '';
+  });
+  render();
+  if (!store.set('__t', 1)) toast('This browser is blocking local storage, so nothing will be remembered after you close the tab. Use "Save a copy" to keep your work.');
+  store.del('__t');
+}
+if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
